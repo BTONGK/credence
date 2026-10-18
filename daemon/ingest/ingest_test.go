@@ -135,3 +135,45 @@ func TestIngestClaudeTranscript(t *testing.T) {
 	}
 	_ = spec.KindCommit
 }
+
+func TestSessionOutsideRepoIsReported(t *testing.T) {
+	t.Setenv("CREDENCE_HOME", t.TempDir())
+	cfgDir := t.TempDir()
+	t.Setenv("CLAUDE_CONFIG_DIR", cfgDir)
+	dir, _ := filepath.EvalSymlinks(t.TempDir())
+	t.Setenv("GIT_CEILING_DIRECTORIES", filepath.Dir(dir))
+	st, err := store.Open(filepath.Join(t.TempDir(), "c.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	eng := New(st, config.Default(), nil, []byte("k"), time.Time{})
+	sid := "22222222-3333-4444-5555-666666666666"
+	tp := filepath.Join(cfgDir, "projects", "-notes", sid+".jsonl")
+	os.MkdirAll(filepath.Dir(tp), 0o755)
+	base := map[string]any{"sessionId": sid, "cwd": dir, "version": "2.1.302"}
+	rec := func(extra map[string]any) string {
+		m := map[string]any{}
+		for k, v := range base {
+			m[k] = v
+		}
+		for k, v := range extra {
+			m[k] = v
+		}
+		return line(m)
+	}
+	os.WriteFile(tp, []byte(rec(map[string]any{"type": "user", "timestamp": "2026-10-17T20:00:00Z", "message": map[string]any{"role": "user", "content": "tidy my notes"}})+
+		rec(map[string]any{"type": "assistant", "timestamp": "2026-10-17T20:00:05Z", "message": map[string]any{"id": "msg_1", "model": "claude-opus-5-5",
+			"content": []any{map[string]any{"type": "text", "text": "I updated `notes.md`."}}}})), 0o644)
+	a, _ := adapters.Get("claude-code")
+	if err := eng.ProcessFile(context.Background(), tp, a, true); err != nil {
+		t.Fatal(err)
+	}
+	s, err := st.GetSession(SessionID("claude-code", sid))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Repo != "" || s.Skipped {
+		t.Fatalf("session outside a repo: repo=%q skipped=%v reason=%s", s.Repo, s.Skipped, s.SkipReason)
+	}
+}

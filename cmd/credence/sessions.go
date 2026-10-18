@@ -48,7 +48,7 @@ func cmdSessions(ctx context.Context, args []string) error {
 		return printJSON(items)
 	}
 	if len(items) == 0 {
-		fmt.Println("No sessions captured yet. Run `credence init`, then use your agent in a git repo (or try `credence demo`).")
+		fmt.Println("No sessions captured yet. Run `credence init`, then use your agent as usual (or try `credence demo`).")
 		return nil
 	}
 	muted := 0
@@ -98,23 +98,36 @@ func orDash(s string) string {
 }
 
 func cmdShow(ctx context.Context, args []string) error {
-	fs := newFlags("show", "<session|claim> [--events] [--json]")
+	fs := newFlags("show", "[session|claim] [--events] [--json]")
 	asJSON := fs.Bool("json", false, "JSON output")
 	events := fs.Bool("events", false, "list raw events instead of episodes")
 	pos, err := parse(fs, args)
 	if err != nil {
 		return err
 	}
-	if len(pos) != 1 {
+	if len(pos) > 1 {
 		fs.Usage()
-		return flag2("expected a session or claim id")
+		return flag2("expected one session or claim id")
 	}
 	d, err := open()
 	if err != nil {
 		return err
 	}
 	defer d.Close()
-	ref := pos[0]
+	// With no id, show the most recent session.
+	ref := ""
+	if len(pos) == 1 {
+		ref = pos[0]
+	} else {
+		rows, err := d.Store.ListSessions(store.SessionFilter{Limit: 1})
+		if err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			return errors.New("no sessions captured yet; try `credence demo`")
+		}
+		ref = rows[0].ID
+	}
 	if strings.HasPrefix(ref, "clm_") {
 		row, err := d.Store.GetClaim(ref)
 		if err != nil {

@@ -95,7 +95,7 @@ func cmdInit(ctx context.Context, args []string) error {
 	}
 	fmt.Printf("  • keep all data local in %s; no model calls unless you configure an auditor or judge\n", home.Dir())
 	if *dry {
-		fmt.Println(dim("\n(dry run: nothing changed)"))
+		fmt.Println()
 	} else if !*yes && !confirm("\nProceed?") {
 		return errors.New("cancelled")
 	}
@@ -107,6 +107,10 @@ func cmdInit(ctx context.Context, args []string) error {
 			continue
 		}
 		for _, act := range rep.Actions {
+			if *dry {
+				fmt.Printf("  %s %s\n", dim("→"), wouldDo(act))
+				continue
+			}
 			fmt.Printf("  %s %s\n", green("✓"), act)
 		}
 		for _, w := range rep.Warn {
@@ -114,6 +118,7 @@ func cmdInit(ctx context.Context, args []string) error {
 		}
 	}
 	if *dry {
+		fmt.Println(dim("\nDry run: everything above is a preview. Run `credence init` to apply it."))
 		return nil
 	}
 	cfg := config.Load()
@@ -151,7 +156,7 @@ func cmdInit(ctx context.Context, args []string) error {
 	} else {
 		fmt.Printf("  %s daemon running\n", green("✓"))
 	}
-	fmt.Println("\nNext: use your agent in a git repo, then run `credence sessions` or `credence ui`. Try `credence demo` to see a full example.")
+	fmt.Println("\nNext: use your agent as usual, then run `credence ui` to read the reports. Try `credence demo` to see a full example.")
 	return nil
 }
 
@@ -302,7 +307,7 @@ func cmdDoctor(ctx context.Context, args []string) error {
 		add("state dir", true, home.Dir(), "")
 	}
 	_, gitErr := exec.LookPath("git")
-	add("git", gitErr == nil, "required for evidence and test re-runs", "install git")
+	add("git", gitErr == nil, "used for commit evidence and test re-runs", "install git")
 	d, err := open()
 	if err != nil {
 		add("database", false, err.Error(), "")
@@ -336,7 +341,7 @@ func cmdDoctor(ctx context.Context, args []string) error {
 			}
 			last := d.Store.LastHook(a.Name())
 			if n == 0 {
-				warn(a.Name()+": hook activity", "no hook events in the last 7 days", "use "+a.Name()+" in a git repo, then re-run doctor")
+				warn(a.Name()+": hook activity", "no hook events in the last 7 days", "use "+a.Name()+" for a session, then re-run doctor")
 			} else {
 				add(a.Name()+": hook activity", true, fmt.Sprintf("%d hook events in 7 days, last %s", n, ago(last)), "")
 			}
@@ -473,4 +478,18 @@ func cmdBackfill(ctx context.Context, args []string) error {
 	}
 	fmt.Printf("captured %d transcripts from the last %s; queued %d reports for the daemon\n", n, *since, queued)
 	return nil
+}
+
+// wouldDo words an install action for a dry run: "registered 6 hooks" is
+// "would register 6 hooks".
+func wouldDo(act string) string {
+	if strings.HasPrefix(act, "would ") {
+		return act
+	}
+	for _, v := range [][2]string{{"registered ", "would register "}, {"wrote ", "would write "}, {"added ", "would add "}, {"installed ", "would install "}, {"removed ", "would remove "}, {"updated ", "would update "}} {
+		if strings.HasPrefix(act, v[0]) {
+			return v[1] + strings.TrimPrefix(act, v[0])
+		}
+	}
+	return "would: " + act
 }

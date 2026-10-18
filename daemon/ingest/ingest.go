@@ -536,9 +536,9 @@ func (e *Engine) resolveRepo(sc *sessCtx, drafts []adapters.Draft) {
 			return
 		}
 	}
-	if s.Repo == "" {
-		s.Skipped, s.SkipReason = true, "not_in_git_repo"
-	} else if s.SkipReason == "not_in_git_repo" {
+	// Sessions outside a repository get reports too: the claims in an
+	// agent's replies are checked against the session's own record.
+	if s.SkipReason == "not_in_git_repo" {
 		s.Skipped, s.SkipReason = false, ""
 	}
 }
@@ -983,8 +983,6 @@ func (e *Engine) ensureHookSession(rec adapters.HookRecord, sid string) {
 	if repo != "" {
 		s.RepoName = filepath.Base(repo)
 		s.Branch = gitx.Branch(repo)
-	} else {
-		s.Skipped, s.SkipReason = true, "not_in_git_repo"
 	}
 	s.Human = e.human(repo)
 	_ = e.Store.UpsertSession(&s)

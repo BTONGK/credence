@@ -224,7 +224,7 @@ func (d *Daemon) assemble(ctx context.Context, now time.Time) {
 	idle := time.Duration(d.Cfg.Capture.IdleSeconds) * time.Second
 	closeAfter := time.Duration(d.Cfg.Capture.CloseMinutes) * time.Minute
 	for _, s := range rows {
-		if s.EventCount == 0 || (s.Skipped && s.SkipReason == "internal") || s.SkipReason == "not_in_git_repo" || s.SkipReason == "excluded_repo" {
+		if s.EventCount == 0 || (s.Skipped && s.SkipReason == "internal") || s.SkipReason == "excluded_repo" {
 			continue
 		}
 		if s.State == "closed" {
