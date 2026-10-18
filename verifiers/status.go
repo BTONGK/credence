@@ -101,6 +101,9 @@ func Decide(c *spec.Claim, vs []spec.Verdict, pol *policy.Policy, clusterOrigin 
 			d.Status = spec.StatusContradicted
 			return finishSection(d, c, clusterOrigin)
 		}
+		if c.Origin == spec.OriginStated {
+			return decideStated(d, c, vs, passBy, t1Inconclusive, clusterOrigin)
+		}
 		for _, r := range pol.Type(c.Type).Require {
 			ok := false
 			switch r {
@@ -145,6 +148,28 @@ func Decide(c *spec.Claim, vs []spec.Verdict, pol *policy.Policy, clusterOrigin 
 	return finishSection(d, c, clusterOrigin)
 }
 
+// decideStated settles a statement from the agent's reply once nothing
+// contradicted it: an independent re-run or git check verifies it, the
+// session record alone corroborates it, and anything the record couldn't
+// speak to leaves it unverified.
+func decideStated(d Decision, c *spec.Claim, vs []spec.Verdict, passBy map[string]bool, inconclusive []spec.Verdict, clusterOrigin string) Decision {
+	for _, v := range inconclusive {
+		d.Notes = append(d.Notes, v.Details)
+	}
+	switch {
+	case len(inconclusive) > 0:
+		d.Status = spec.StatusUnverified
+	case passBy["tests"] || passBy["git"] || passBy["ci"]:
+		d.Status = spec.StatusVerified
+	case passBy["session"] || passBy["judge"]:
+		d.Status = spec.StatusCorroborated
+	default:
+		d.Status = spec.StatusUnverified
+		d.Notes = append(d.Notes, "This claim goes beyond the session record.")
+	}
+	return finishSection(d, c, clusterOrigin)
+}
+
 // codeChange types are capped when their only test proof was written in the
 // same session. A test or diagnosis claim is about the test or repro itself.
 var codeChange = map[string]bool{spec.TypeFix: true, spec.TypeFeature: true, spec.TypeRefactor: true, spec.TypeOps: true}
@@ -157,16 +182,16 @@ func missingNote(r string, c *spec.Claim, judgeAvailable bool, vs []spec.Verdict
 				return "needs a passing test re-run"
 			}
 		}
-		return "needs a test re-run, but the claim has no test assertion"
+		return "needs a test assertion to re-run"
 	case "judge":
 		if !judgeAvailable {
-			return "needs the blind judge (no judge configured) or a human"
+			return "needs a human review, or a blind judge once one is configured"
 		}
-		return "the blind judge did not confirm it"
+		return "the blind judge asked for more evidence"
 	case "ci":
 		return "needs green CI"
 	case "git":
-		return "needs a git check (no commit assertion)"
+		return "needs a commit assertion for a git check"
 	}
 	return fmt.Sprintf("needs %s", r)
 }

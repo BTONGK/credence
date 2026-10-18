@@ -57,6 +57,9 @@ const (
 	OriginSelf    = "self"
 	OriginAuditor = "auditor"
 	OriginHuman   = "human"
+	// OriginStated is a claim the agent made in prose, in a reply to the
+	// human, rather than with the credence_claim tool.
+	OriginStated = "stated"
 )
 
 // Event kinds.

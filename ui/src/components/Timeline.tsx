@@ -32,7 +32,7 @@ export function Timeline({ report, highlight, onOpen }: {
     el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [key])
 
-  if (!eps.length) return <div className="empty">No events captured.</div>
+  if (!eps.length) return <div className="empty">Events will appear here as they’re captured.</div>
   return (
     <div className="timeline">
       <div className="pane-head">

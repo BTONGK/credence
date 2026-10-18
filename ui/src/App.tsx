@@ -3,7 +3,7 @@ import { api, ApiError, bootstrapToken, forgetToken } from './api'
 import { Help } from './components/Help'
 import type { Status } from './types'
 import { Link } from './components/Link'
-import { connectLive, cx, isTyping, money, navigate, useAsync, useKeys, useLive, useLiveState, useLocation } from './lib'
+import { connectLive, cx, isTyping, navigate, useAsync, useKeys, useLive, useLiveState, useLocation } from './lib'
 import { Inbox } from './pages/Inbox'
 import { Ledger } from './pages/Ledger'
 import { SessionPage } from './pages/Session'
@@ -89,17 +89,11 @@ export function App() {
 function StatusPill({ status }: { status: Status | null }) {
   const live = useLiveState()
   const busy = status ? (status.jobs?.pending ?? 0) + (status.jobs?.running ?? 0) : 0
-  const title = status
-    ? `credenced ${status.version} · pid ${status.pid} · auditor ${status.auditor || 'rules'} · judge ${status.judge || 'none'}`
-    : 'connecting…'
+  const title = status ? `credenced ${status.version}` : 'connecting…'
   return (
     <div className="status" title={title}>
       <span className={cx('dot', live ? 'dot-live' : 'dot-off')} aria-hidden />
-      <span>{live ? 'live' : 'offline'}</span>
-      {busy > 0 && <span className="status-sep">· verifying ({busy})</span>}
-      {status && status.budget_usd > 0 && (
-        <span className="status-sep hide-sm">· {money(status.month_spend_usd)} of {money(status.budget_usd)} model budget</span>
-      )}
+      <span>{busy > 0 ? 'checking…' : live ? 'up to date' : 'offline'}</span>
     </div>
   )
 }
@@ -109,7 +103,7 @@ function ClaimRedirect({ id }: { id: string }) {
   useEffect(() => {
     if (data) navigate(`/sessions/${data.card.claim.session_id}?claim=${id}`, true)
   }, [data, id])
-  if (error) return <div className="empty">Claim not found: {error.message}</div>
+  if (error) return <div className="empty">Looking up that claim failed: {error.message}</div>
   return <div className="empty">Opening claim…</div>
 }
 

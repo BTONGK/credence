@@ -40,7 +40,7 @@ export function EvidencePanel({ opened, sessionId, cwd, onClose }: {
           {ev.kind === 'test_run' && <TestRuns ids={(ev.id ?? ev.target.replace(/^test_run:/, '')).split(/[,\s]+/).filter(Boolean)} />}
           {['ci', 'pr', 'issue'].includes(ev.kind) && <External target={ev.target} />}
           {ev.kind === 'unresolved' && (
-            <div className="banner banner-warn">This evidence didn’t resolve to anything Credence captured: <code>{ev.target}</code></div>
+            <div className="banner banner-warn">This evidence points outside what Credence captured: <code>{ev.target}</code></div>
           )}
         </div>
       </aside>
@@ -113,7 +113,7 @@ function FileAt({ session, commit, path }: { session: string; commit: string; pa
 }
 
 export function DiffView({ text }: { text: string }) {
-  if (!text.trim()) return <div className="muted">No textual changes.</div>
+  if (!text.trim()) return <div className="muted">The diff for this change is empty.</div>
   return (
     <pre className="code diff">
       {text.split('\n').map((l, i) => {
@@ -133,7 +133,7 @@ function TestRuns({ ids }: { ids: string[] }) {
   const order = (r: TestRun) => (r.target === 'before' ? 0 : mutantOf(r) ? 2 : 1)
   return (
     <div className="runs">
-      <p className="muted small">Credence re-ran these in a clean git worktree; it never trusts the agent’s own test output.</p>
+      <p className="muted small">Credence re-ran these in a clean git worktree, so the results come from Credence itself.</p>
       {[...data].sort((a, b) => order(a) - order(b)).map((r) => {
         const m = mutantOf(r)
         return (

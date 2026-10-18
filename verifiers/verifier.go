@@ -67,7 +67,7 @@ func verdict(vc *Context, c *spec.Claim, verifier string, tier int, check, resul
 
 // Pipeline is the ordered set of verifiers.
 func Pipeline(vc *Context) []Verifier {
-	vs := []Verifier{Resolve{}, Git{}, &Tests{}, &Mutation{}, GitHubChecks{}}
+	vs := []Verifier{Resolve{}, Git{}, Session{}, &Tests{}, &Mutation{}, GitHubChecks{}}
 	for _, p := range vc.Plugins {
 		vs = append(vs, p)
 	}

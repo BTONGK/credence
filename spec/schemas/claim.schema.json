@@ -10,7 +10,7 @@
     "id": { "type": "string", "pattern": "^clm_[0-9A-HJKMNP-TV-Z]{10}$" },
     "session_id": { "type": "string" },
     "claimant": { "$ref": "#/$defs/contributor" },
-    "origin": { "enum": ["self", "auditor", "human"] },
+    "origin": { "enum": ["self", "stated", "auditor", "human"] },
     "type": { "$ref": "#/$defs/claimType" },
     "title": { "type": "string", "minLength": 1, "maxLength": 100 },
     "statement": { "type": "string", "minLength": 1 },

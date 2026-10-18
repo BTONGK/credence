@@ -45,6 +45,8 @@ export interface SessionItem extends SessionRow {
   summary: string
   model: string
   muted: boolean
+  tally: Partial<Record<'backed' | 'unchecked' | 'contradicted', number>>
+  noticed: number
 }
 
 export interface Evidence {
@@ -65,7 +67,7 @@ export interface Claim {
   id: string
   session_id: string
   claimant: string
-  origin: 'self' | 'auditor' | 'human' | string
+  origin: 'self' | 'stated' | 'auditor' | 'human' | string
   type: string
   title: string
   statement: string
@@ -169,7 +171,11 @@ export interface ClaimCard extends ClaimRow {
   credit: string
   members: Member[] | null
   self_confidence?: number
+  verdict: Verdict
+  reason: string
 }
+
+export type Verdict = 'contradicted' | 'backed' | 'partly' | 'unchecked' | 'pending'
 
 export interface Episode {
   session: string

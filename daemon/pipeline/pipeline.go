@@ -99,6 +99,7 @@ func (e *Engine) Report(ctx context.Context, sessionID string, o Options) (*Summ
 	}
 
 	self := claims.ExtractSelfClaims(d)
+	stated := claims.ExtractStated(d)
 	var aud auditor.Result
 	if o.Final {
 		aud = auditor.Run(ctx, e.Store, e.Cfg, d)
@@ -115,9 +116,10 @@ func (e *Engine) Report(ctx context.Context, sessionID string, o Options) (*Summ
 	if aud.Fallback != "" {
 		e.logf("session %s: model auditor unavailable (%s); used rules", sessionID, aud.Fallback)
 	}
-	if aud.Skipped != "" && len(self) == 0 {
+	if aud.Skipped != "" && len(self) == 0 && len(stated) == 0 {
 		_ = e.Store.SetSkipped(sessionID, true, aud.Skipped)
 		_ = e.Store.DeactivateClaims(sessionID, spec.OriginAuditor, nil)
+		_ = e.Store.DeactivateClaims(sessionID, spec.OriginStated, nil)
 		_ = e.Store.SetReportState(sessionID, state, "")
 		e.changed(sessionID)
 		sum.Duration = time.Since(start)
@@ -125,12 +127,18 @@ func (e *Engine) Report(ctx context.Context, sessionID string, o Options) (*Summ
 	}
 	_ = e.Store.SetSkipped(sessionID, false, "")
 
-	keepSelf, keepAud := map[string]bool{}, map[string]bool{}
+	keepSelf, keepStated, keepAud := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for _, c := range self {
 		if _, err := e.Store.InsertClaim(c); err != nil {
 			return nil, err
 		}
 		keepSelf[c.ID] = true
+	}
+	for _, c := range stated {
+		if _, err := e.Store.InsertClaim(c); err != nil {
+			return nil, err
+		}
+		keepStated[c.ID] = true
 	}
 	for _, c := range aud.Claims {
 		if _, err := e.Store.InsertClaim(c); err != nil {
@@ -139,6 +147,9 @@ func (e *Engine) Report(ctx context.Context, sessionID string, o Options) (*Summ
 		keepAud[c.ID] = true
 	}
 	if err := e.Store.DeactivateClaims(sessionID, spec.OriginSelf, keepSelf); err != nil {
+		return nil, err
+	}
+	if err := e.Store.DeactivateClaims(sessionID, spec.OriginStated, keepStated); err != nil {
 		return nil, err
 	}
 	if err := e.Store.DeactivateClaims(sessionID, spec.OriginAuditor, keepAud); err != nil {

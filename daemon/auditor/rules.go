@@ -119,10 +119,33 @@ var (
 	refactorRe  = regexp.MustCompile(`(?i)\b(refactor\w*|rename\w*|cleanup|clean up|simplif\w*|extract\w*|reorgani\w*|restructur\w*|tidy)\b`)
 	opsRe       = regexp.MustCompile(`(?i)\b(ci|build|deploy\w*|infra|docker\w*|workflow|release|bump|dependenc\w*|upgrade)\b`)
 	reproRe     = regexp.MustCompile(`(?i)(repro|reproduce|minimal|debug_|bisect)[\w\-]*\.(py|js|ts|sh|go|rb|mjs)`)
-	rootCauseRe = regexp.MustCompile(`(?i)(root cause|the (?:bug|issue|problem|culprit) (?:is|was)|is caused by|was caused by|caused by a|race condition (?:in|between|where)|the reason (?:is|was))`)
+	rootCauseRe = regexp.MustCompile(`(?i)(root cause (?:is|was)|the (?:bug|culprit) (?:is|was)|is caused by|was caused by|caused by a|race condition (?:in|between|where))`)
 	negativeRe  = regexp.MustCompile(`(?i)(didn't work|doesn't work|did not (?:fix|help|work)|does not fix|still fail\w*|no luck|ruled out|not the cause|isn't the cause|wasn't the cause|that approach (?:failed|didn't)|revert(?:ing|ed)? (?:my|the|that) (?:change|attempt|approach)|dead end)`)
 	reviewRe    = regexp.MustCompile(`(?i)\b(review|pr\b|pull request|diff|audit)\b`)
+	youRe       = regexp.MustCompile(`(?i)\byou(?:'ve|'re|r)?\b`)
 )
+
+// substantive reports whether a sentence says enough to be a claim:
+// "Underneath it are three root causes: 1." does not.
+func substantive(s string) bool {
+	s = strings.TrimSpace(s)
+	if len(strings.Fields(s)) < 6 {
+		return false
+	}
+	last := s[len(s)-1]
+	return !(last == ':' || (last == '.' && len(s) > 1 && s[len(s)-2] >= '0' && s[len(s)-2] <= '9'))
+}
+
+// scratch reports paths that are not project work: temp files, harness
+// state and memory notes.
+func scratch(p string) bool {
+	for _, s := range []string{"/tmp/", "/var/folders/", "/.claude/", "/scratchpad/", "/.playwright-mcp/", "/.cache/"} {
+		if strings.Contains("/"+p, s) {
+			return true
+		}
+	}
+	return strings.HasPrefix(p, "/private/")
+}
 
 func classify(subject string, files []string) string {
 	allTests, allDocs := len(files) > 0, len(files) > 0
@@ -284,7 +307,7 @@ func (Rules) Audit(d *claims.Data) []*spec.Claim {
 	var dirtySeqs []int
 	seenDirty := map[string]bool{}
 	for _, e := range f.edits {
-		if committed[e.path] {
+		if committed[e.path] || scratch(e.path) {
 			continue
 		}
 		dirtySeqs = append(dirtySeqs, e.seq)
@@ -303,7 +326,11 @@ func (Rules) Audit(d *claims.Data) []*spec.Claim {
 		if pass := passAfter(f.tests, dirtySeqs[len(dirtySeqs)-1]); pass != nil {
 			ev = append(ev, spec.Evidence{Target: spec.EventTarget(sid, pass.seq, max(pass.resultSeq, pass.seq)), Relation: spec.RelDemonstrates})
 		}
-		mk(typ, "Uncommitted changes to "+fileList(dirty), fmt.Sprintf("Edited %s in this session without committing", fileList(dirty)), ev, as)
+		if d.Session.Repo == "" {
+			mk(typ, "Changed "+fileList(dirty), fmt.Sprintf("Edited %s in this session (not in a git repository)", fileList(dirty)), ev, as)
+		} else {
+			mk(typ, "Uncommitted changes to "+fileList(dirty), fmt.Sprintf("Edited %s in this session without committing", fileList(dirty)), ev, as)
+		}
 	}
 	// Diagnosis: a repro that fails before a commit and passes after it.
 	diagnosed := false
@@ -364,7 +391,7 @@ func (Rules) Audit(d *claims.Data) []*spec.Claim {
 				continue
 			}
 			text := claims.PayloadStr(e, "text")
-			if !rootCauseRe.MatchString(text) {
+			if !rootCauseRe.MatchString(text) || !substantive(firstSentence(text, rootCauseRe)) {
 				continue
 			}
 			from := max(1, e.Seq-12)
@@ -384,8 +411,11 @@ func (Rules) Audit(d *claims.Data) []*spec.Claim {
 		if !negativeRe.MatchString(text) {
 			continue
 		}
-		negatives++
 		s := firstSentence(text, negativeRe)
+		if !substantive(s) || youRe.MatchString(s) {
+			continue // "Reddit didn't work." or "the option you already ruled out"
+		}
+		negatives++
 		mk(spec.TypeNegativeResult, "Ruled out: "+headClip(s, 80), s,
 			[]spec.Evidence{{Target: spec.EventTarget(sid, max(1, e.Seq-8), e.Seq), Relation: spec.RelProduced}}, nil)
 	}
@@ -445,14 +475,14 @@ func (Rules) Audit(d *claims.Data) []*spec.Claim {
 					research++
 				}
 			case spec.KindPrompt:
-				if firstPrompt == "" && role(e.Actor) == "human" {
-					firstPrompt = claims.PayloadStr(e, "text")
+				if t := strings.TrimSpace(claims.PayloadStr(e, "text")); firstPrompt == "" && role(e.Actor) == "human" && !strings.HasPrefix(t, "/") {
+					firstPrompt = t
 				}
 			case spec.KindMessage:
 				lastMsg = e
 			}
 		}
-		if lastMsg != nil && len(claims.PayloadStr(lastMsg, "text")) > 200 {
+		if lastMsg != nil && firstPrompt != "" && len(claims.PayloadStr(lastMsg, "text")) > 200 {
 			ev := []spec.Evidence{{Target: spec.EventTarget(sid, lastMsg.Seq, lastMsg.Seq), Relation: spec.RelProduced}}
 			switch {
 			case reviewRe.MatchString(firstPrompt) && reads >= 2:

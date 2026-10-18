@@ -98,6 +98,14 @@ func overlap[K comparable](a, b map[K]bool) int {
 }
 
 func similarity(a, b *spec.Claim, fa, fb features) float64 {
+	// Each sentence the agent wrote is its own claim. It merges only with a
+	// claim the agent also filed with the tool, never with the auditor's
+	// inventory of the same turn.
+	if a.Origin == spec.OriginStated || b.Origin == spec.OriginStated {
+		if a.Origin == b.Origin || (a.Origin != spec.OriginSelf && b.Origin != spec.OriginSelf) {
+			return 0
+		}
+	}
 	shared := overlap(fa.commits, fb.commits) > 0
 	if !typeCompatible(a.Type, b.Type, shared) {
 		return 0
@@ -160,7 +168,7 @@ func Reconcile(d *Data, cs []*spec.Claim) []store.Cluster {
 	var out []store.Cluster
 	for _, idx := range groups {
 		var members []string
-		hasSelf, hasAud, hasHuman := false, false, false
+		hasSelf, hasAud, hasHuman, hasStated := false, false, false, false
 		selfCount := 0
 		for _, i := range idx {
 			members = append(members, cs[i].ID)
@@ -172,6 +180,8 @@ func Reconcile(d *Data, cs []*spec.Claim) []store.Cluster {
 				hasAud = true
 			case spec.OriginHuman:
 				hasHuman = true
+			case spec.OriginStated:
+				hasStated = true
 			}
 		}
 		sort.Strings(members)
@@ -189,6 +199,9 @@ func Reconcile(d *Data, cs []*spec.Claim) []store.Cluster {
 		case hasSelf:
 			cl.Origin = spec.OriginSelf
 			cl.Flags = append(cl.Flags, "auditor_did_not_find")
+		case hasStated:
+			cl.Origin = spec.OriginStated
+			cl.Flags = append(cl.Flags, "stated_in_reply")
 		default:
 			cl.Origin = spec.OriginAuditor
 			cl.Flags = append(cl.Flags, "found_by_auditor")
@@ -209,8 +222,10 @@ func pickPrimary(cs []*spec.Claim, idx []int) int {
 			return 3
 		case spec.OriginSelf:
 			return 2
+		case spec.OriginStated:
+			return 1
 		}
-		return 1
+		return 0
 	}
 	best := idx[0]
 	for _, i := range idx[1:] {

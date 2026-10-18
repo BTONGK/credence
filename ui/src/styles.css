@@ -1924,3 +1924,459 @@ textarea.input {
 .confidence strong {
   white-space: nowrap;
 }
+
+/* ---- plain report (sessions list + session) ---- */
+
+.page-narrow {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.v-backed {
+  --v: var(--good);
+  --v-bg: var(--good-bg);
+}
+
+.v-partly {
+  --v: var(--warn);
+  --v-bg: var(--warn-bg);
+}
+
+.v-unchecked {
+  --v: var(--neutral);
+  --v-bg: var(--neutral-bg);
+}
+
+.v-contradicted {
+  --v: var(--bad);
+  --v-bg: var(--bad-bg);
+}
+
+.v-pending {
+  --v: var(--text-3);
+  --v-bg: var(--surface-2);
+}
+
+.vmark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--v-bg);
+  color: var(--v);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.s2-head,
+.i2-head {
+  margin-bottom: 16px;
+}
+
+.s2-head h1,
+.i2-head h1 {
+  font-size: 24px;
+}
+
+.s2-meta,
+.i2-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.i2-meta {
+  display: block;
+  margin-top: 2px;
+}
+
+.s2-summary {
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.s2-lede,
+.i2-lede {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.i2-lede {
+  margin-top: 6px;
+  color: var(--text-2);
+}
+
+.i2-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.s2-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  margin: 14px 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.s2-bar > span {
+  background: var(--v);
+  min-width: 6px;
+}
+
+.s2-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.s2-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.s2-legend .vmark {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.s2-h {
+  margin: 0 0 10px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.clist,
+.i2-list,
+.cchecks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clist {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.citem + .citem {
+  border-top: 1px solid var(--border);
+}
+
+.citem.v-contradicted {
+  box-shadow: inset 3px 0 0 var(--bad);
+}
+
+.citem-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.citem-row:hover,
+.citem.is-open .citem-row {
+  background: var(--surface-2);
+}
+
+.citem-row .vmark {
+  margin-top: 1px;
+}
+
+.citem-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.citem-title {
+  font-size: 14.5px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.citem-reason {
+  color: var(--text-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.citem-verdict {
+  color: var(--v);
+  font-weight: 600;
+}
+
+/* Commands in reasons are context, not the point: keep them quiet. */
+.citem-reason code,
+.ccheck code,
+.citem-title code {
+  padding: 0 3px;
+  border: 0;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 0.88em;
+}
+
+.citem-side {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding-top: 1px;
+}
+
+.citem-time {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.you {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.you-ok {
+  background: var(--good-bg);
+  color: var(--good);
+}
+
+.you-bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.citem-detail {
+  padding: 4px 16px 16px 48px;
+  background: var(--surface-2);
+}
+
+.citem-detail h4 {
+  margin: 10px 0 6px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.citem-full {
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.ccheck {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  color: var(--text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.ccheck-glyph {
+  flex: none;
+  width: 14px;
+  color: var(--v);
+  font-weight: 700;
+}
+
+.citem-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.grow {
+  flex: 1;
+}
+
+.btn-bad {
+  border-color: color-mix(in srgb, var(--bad) 45%, var(--border-strong));
+  color: var(--bad);
+}
+
+.edit-wording {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.edit-wording textarea {
+  height: auto;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.s2-fold {
+  margin-top: 20px;
+}
+
+.s2-fold-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.s2-fold-btn:hover {
+  color: var(--text);
+}
+
+.s2-fold-note {
+  margin: 2px 0 10px;
+}
+
+.s2-convo {
+  margin-top: 8px;
+}
+
+.s2-foot {
+  margin: 32px 0 8px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.i2-search {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.i2-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.i2-list:empty {
+  display: none;
+}
+
+.i2-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.i2-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.i2-row:hover,
+.i2-row.selected {
+  background: var(--surface-2);
+}
+
+.i2-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.i2-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.i2-tally {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+.i2-n {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.i2-quiet {
+  margin-top: 8px;
+}
+
+.i2-quiet .i2-title {
+  color: var(--text-2);
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 16px;
+  }
+
+  .citem-row {
+    flex-wrap: wrap;
+  }
+
+  .citem-side {
+    width: 100%;
+    padding-left: 32px;
+  }
+
+  .citem-detail {
+    padding-left: 16px;
+  }
+
+  .i2-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .i2-title {
+    white-space: normal;
+  }
+}

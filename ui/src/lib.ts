@@ -164,9 +164,20 @@ export function dur(sec: number): string {
 export function clock(iso: string, start: string): string {
   const d = Math.max(0, (new Date(iso).getTime() - new Date(start).getTime()) / 1000)
   if (!isFinite(d)) return ''
-  const m = Math.floor(d / 60)
+  const h = Math.floor(d / 3600)
+  const m = Math.floor((d % 3600) / 60)
   const s = Math.floor(d % 60)
-  return `${m}:${String(s).padStart(2, '0')}`
+  const ss = String(s).padStart(2, '0')
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
+}
+
+// "Oct 17" this year, "Oct 17, 2025" otherwise.
+export function day(iso: string | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (!d.getTime()) return ''
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString(undefined, sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function money(usd: number): string {

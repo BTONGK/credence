@@ -269,7 +269,7 @@ func mergeModel(dst *Model, src Model) {
 	}
 }
 
-var knownVerifiers = map[string]bool{"resolve": true, "tests": true, "mutation": true, "git": true, "ci": true, "judge": true, "human": true}
+var knownVerifiers = map[string]bool{"resolve": true, "tests": true, "mutation": true, "git": true, "session": true, "ci": true, "judge": true, "human": true}
 
 // Validate checks the policy for mistakes.
 func (p *Policy) Validate() error {

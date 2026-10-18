@@ -26,10 +26,10 @@ type SectionInfo struct {
 // Sections in display order.
 var Sections = []SectionInfo{
 	{spec.SectionVerified, "Verified", "Claimed by the agent and confirmed by checks"},
-	{spec.SectionUnverified, "Unverified", "Claimed, plausible, but nothing machine-checkable backs it yet"},
+	{spec.SectionUnverified, "Unverified", "Claimed and plausible, waiting on a machine check"},
 	{spec.SectionContradicted, "Contradicted", "Claimed, and the evidence disagrees"},
-	{spec.SectionAuditor, "Found by auditor", "Work the agent did but didn't claim"},
-	{spec.SectionFailures, "Reported failures", "Approaches the agent tried and said didn't work"},
+	{spec.SectionAuditor, "Found by auditor", "Work the agent did beyond what it claimed"},
+	{spec.SectionFailures, "Reported failures", "Approaches the agent tried and set aside"},
 }
 
 // SessionItem is one inbox row.
@@ -43,6 +43,10 @@ type SessionItem struct {
 	Summary     string         `json:"summary"`
 	Model       string         `json:"model"`
 	Muted       bool           `json:"muted"`
+	// Tally counts the agent's claims by verdict (backed, unchecked,
+	// contradicted); Noticed counts what the auditor found besides.
+	Tally   map[string]int `json:"tally"`
+	Noticed int            `json:"noticed"`
 }
 
 // Inbox lists sessions with claim summaries.
@@ -61,7 +65,7 @@ func Inbox(st *store.Store, f store.SessionFilter) ([]SessionItem, error) {
 
 // Item summarizes one session.
 func Item(r *store.SessionRow, cs []*store.ClaimRow) SessionItem {
-	it := SessionItem{SessionRow: r, Counts: map[string]int{}}
+	it := SessionItem{SessionRow: r, Counts: map[string]int{}, Tally: map[string]int{}}
 	end := r.LastActivity
 	if r.EndedAt != nil && r.EndedAt.After(r.StartedAt) {
 		end = *r.EndedAt
@@ -78,6 +82,16 @@ func Item(r *store.SessionRow, cs []*store.ClaimRow) SessionItem {
 		}
 		it.Claims++
 		it.Counts[c.Section]++
+		switch {
+		case c.Section == spec.SectionAuditor || c.Section == spec.SectionFailures:
+			it.Noticed++
+		case c.Section == spec.SectionContradicted:
+			it.Tally[VerdictContradicted]++
+		case c.Status == spec.StatusVerified || c.Status == spec.StatusCorroborated:
+			it.Tally[VerdictBacked]++
+		default:
+			it.Tally[VerdictUnchecked]++
+		}
 		it.Value += c.Value
 		if c.ReviewState == spec.ReviewPending {
 			it.Pending++
@@ -86,7 +100,7 @@ func Item(r *store.SessionRow, cs []*store.ClaimRow) SessionItem {
 	it.Summary = SummaryLine(it.Claims, it.Counts)
 	it.Muted = r.Skipped || it.Claims == 0
 	if r.Skipped && r.SkipReason != "" {
-		it.Summary = "nothing to claim · " + r.SkipReason
+		it.Summary = "conversation only · " + r.SkipReason
 	}
 	return it
 }
@@ -94,7 +108,7 @@ func Item(r *store.SessionRow, cs []*store.ClaimRow) SessionItem {
 // SummaryLine renders "5 claims · 3 verified · 1 flagged · 1 found by auditor".
 func SummaryLine(n int, counts map[string]int) string {
 	if n == 0 {
-		return "no claims"
+		return "0 claims"
 	}
 	parts := []string{plural(n, "claim")}
 	if v := counts[spec.SectionVerified]; v > 0 {
@@ -166,6 +180,10 @@ type ClaimCard struct {
 	Credit           string            `json:"credit"`
 	Members          []Member          `json:"members"`
 	SelfConfidence   *float64          `json:"self_confidence,omitempty"`
+	// Verdict is the plain answer to "is this true?": backed, partly,
+	// unchecked, contradicted or pending. Reason says why in one line.
+	Verdict string `json:"verdict"`
+	Reason  string `json:"reason"`
 }
 
 // Episode is a compressed run of timeline events.
@@ -287,7 +305,79 @@ func Card(st *store.Store, r *store.ClaimRow) *ClaimCard {
 	}
 	c.Attribution, _ = st.GetAttribution(r.Claim.ID)
 	c.Credit = CreditLine(c.Attribution)
+	c.Verdict, c.Reason = VerdictOf(r.Status, c.Checks, r.Notes)
 	return c
+}
+
+// Verdicts in the order a reader cares about them.
+const (
+	VerdictContradicted = "contradicted"
+	VerdictBacked       = "backed"
+	VerdictPartly       = "partly"
+	VerdictUnchecked    = "unchecked"
+	VerdictPending      = "pending"
+)
+
+// VerdictOf reduces a claim's status and checks to a plain answer and the
+// one line that explains it.
+func VerdictOf(status string, checks []CheckView, notes []string) (string, string) {
+	var pass, fail, open []string
+	partial := false // some check found related work it couldn't tie to the claim
+	for _, k := range checks {
+		if k.Verifier == "resolve" && k.Result == spec.ResultPass {
+			continue
+		}
+		if k.Outcome == "unmatched" {
+			partial = true
+		}
+		switch k.Result {
+		case spec.ResultPass:
+			pass = append(pass, k.Plain)
+		case spec.ResultFail:
+			fail = append(fail, k.Plain)
+		default:
+			open = append(open, k.Plain)
+		}
+	}
+	first := func(xs ...[]string) string {
+		for _, x := range xs {
+			if len(x) > 0 {
+				return x[0]
+			}
+		}
+		return ""
+	}
+	switch status {
+	case spec.StatusProposed:
+		return VerdictPending, "Checking against the session record…"
+	case spec.StatusContradicted, spec.StatusOverstated:
+		return VerdictContradicted, first(fail, notes, open)
+	case spec.StatusVerified, spec.StatusCorroborated:
+		return VerdictBacked, strings.Join(capList(pass, 2), " ")
+	}
+	if len(pass) > 0 {
+		return VerdictPartly, strings.Join(append(capList(pass, 1), capList(append(open, notes...), 1)...), " ")
+	}
+	if partial {
+		return VerdictPartly, first(open, notes)
+	}
+	why := first(open, notes)
+	if why == "" {
+		why = "This claim goes beyond the session record."
+	}
+	return VerdictUnchecked, why
+}
+
+func capList(xs []string, n int) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, x := range xs {
+		if x != "" && !seen[x] && len(out) < n {
+			seen[x] = true
+			out = append(out, x)
+		}
+	}
+	return out
 }
 
 // Chip labels an evidence target.
@@ -342,7 +432,7 @@ func Plain(v spec.Verdict) string {
 		case spec.ResultPass:
 			return "Evidence resolves to captured events and artifacts"
 		case spec.ResultBlocked:
-			return "Evidence could not be found: " + v.Details
+			return "Evidence lookup failed: " + v.Details
 		}
 		return "Evidence failed an integrity check: " + v.Details
 	case "judge":
