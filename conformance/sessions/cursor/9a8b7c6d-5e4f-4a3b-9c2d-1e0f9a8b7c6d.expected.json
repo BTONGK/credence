@@ -1,0 +1,116 @@
+{
+  "harness": "cursor",
+  "harness_session_id": "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d",
+  "cwd": "/work/billing",
+  "model": "gpt-5.5",
+  "started_at": "2026-10-03T10:00:00Z",
+  "tokens": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "events": [
+    {
+      "line": 1,
+      "ts": "2026-10-03T10:00:00Z",
+      "kind": "session_start",
+      "role": "system",
+      "payload": {
+        "cwd": "/work/billing"
+      }
+    },
+    {
+      "line": 1,
+      "ts": "2026-10-03T10:00:00Z",
+      "kind": "prompt",
+      "role": "human",
+      "payload": {
+        "text": "Add a CSV export for invoices."
+      }
+    },
+    {
+      "line": 2,
+      "ts": "2026-10-03T10:00:04Z",
+      "kind": "message",
+      "role": "agent",
+      "payload": {
+        "text": "Adding export_csv to billing/export.py."
+      }
+    },
+    {
+      "line": 2,
+      "ts": "2026-10-03T10:00:04Z",
+      "kind": "file_edit",
+      "role": "agent",
+      "payload": {
+        "added": 2,
+        "added_line_hashes": [
+          "600a52d6ed437cd1"
+        ],
+        "op": "edit",
+        "path": "billing/export.py",
+        "removed": 0,
+        "tool": "edit_file",
+        "tool_call_id": "tc_1"
+      }
+    },
+    {
+      "line": 3,
+      "ts": "2026-10-03T10:00:05Z",
+      "kind": "tool_result",
+      "role": "tool",
+      "payload": {
+        "call_kind": "file_edit",
+        "ok": true,
+        "output": "Applied edit to billing/export.py",
+        "output_len": 33,
+        "tool": "edit_file",
+        "tool_call_id": "tc_1"
+      }
+    },
+    {
+      "line": 4,
+      "ts": "2026-10-03T10:00:09Z",
+      "kind": "command",
+      "role": "agent",
+      "payload": {
+        "command": "python3 -m pytest -q tests/test_export.py",
+        "test": {
+          "runner": "pytest",
+          "targets": [
+            "tests/test_export.py"
+          ]
+        },
+        "tool": "run_terminal_cmd",
+        "tool_call_id": "tc_2"
+      }
+    },
+    {
+      "line": 5,
+      "ts": "2026-10-03T10:00:12Z",
+      "kind": "tool_result",
+      "role": "tool",
+      "payload": {
+        "call_kind": "command",
+        "exit_code": 0,
+        "ok": true,
+        "output": "3 passed in 0.05s",
+        "output_len": 17,
+        "test": {
+          "runner": "pytest",
+          "targets": [
+            "tests/test_export.py"
+          ]
+        },
+        "test_outcome": {
+          "failed": 0,
+          "passed": 3,
+          "status": "pass"
+        },
+        "tool": "run_terminal_cmd",
+        "tool_call_id": "tc_2"
+      }
+    }
+  ]
+}

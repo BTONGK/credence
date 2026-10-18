@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/mcp-claim-input.schema.json",
+  "title": "credence_claim tool input",
+  "description": "What an agent passes to the credence_claim MCP tool. The daemon turns it into a claim. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": ["type", "title", "statement"],
+  "properties": {
+    "type": { "$ref": "claim.schema.json#/$defs/claimType" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "statement": { "type": "string", "minLength": 1 },
+    "rationale": { "type": "string" },
+    "assertions": { "type": "array", "items": { "$ref": "claim.schema.json#/$defs/assertion" } },
+    "evidence_hints": { "type": "array", "items": { "type": "string" } },
+    "co_contributors": {
+      "type": "array",
+      "items": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" }, "basis": { "type": "string" } } }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

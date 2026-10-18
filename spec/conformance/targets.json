@@ -1,0 +1,64 @@
+[
+  {
+    "target": "event:ses_3b2028956d#36-38",
+    "scheme": "event",
+    "session": "ses_3b2028956d",
+    "from": 36,
+    "to": 38
+  },
+  {
+    "target": "event:ses_3b2028956d#31",
+    "scheme": "event",
+    "session": "ses_3b2028956d",
+    "from": 31,
+    "to": 31
+  },
+  {
+    "target": "git:commit/f7539d5",
+    "scheme": "git",
+    "commit": "f7539d5"
+  },
+  {
+    "target": "file:scheduler/queue.py@f7539d5#L16-L30",
+    "scheme": "file",
+    "from": 16,
+    "to": 30,
+    "commit": "f7539d5",
+    "path": "scheduler/queue.py"
+  },
+  {
+    "target": "file:README.md",
+    "scheme": "file",
+    "path": "README.md"
+  },
+  {
+    "target": "test_run:run_8e4fd01e23",
+    "scheme": "test_run",
+    "id": "run_8e4fd01e23"
+  },
+  {
+    "target": "ci:github/acme/scheduler/f7539d5",
+    "scheme": "ci",
+    "id": "github/acme/scheduler/f7539d5"
+  },
+  {
+    "target": "pr:github/acme/scheduler#12",
+    "scheme": "pr",
+    "id": "github/acme/scheduler#12"
+  },
+  {
+    "target": "issue:github/acme/scheduler#7",
+    "scheme": "issue",
+    "id": "github/acme/scheduler#7"
+  },
+  {
+    "target": "unresolved:the flaky test",
+    "scheme": "unresolved",
+    "id": "the flaky test"
+  },
+  {
+    "target": "no scheme",
+    "scheme": "unresolved",
+    "id": "no scheme"
+  }
+]

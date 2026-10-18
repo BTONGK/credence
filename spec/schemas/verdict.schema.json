@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/verdict.schema.json",
+  "title": "Credence verdict",
+  "description": "One verifier's judgment on a claim. credence.verdict/0.9. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": ["spec", "id", "claim_id", "verifier", "tier", "check", "result", "outcome", "details", "duration_ms", "created_at"],
+  "properties": {
+    "spec": { "const": "credence.verdict/0.9" },
+    "id": { "type": "string", "pattern": "^vrd_[0-9A-HJKMNP-TV-Z]{10}$" },
+    "claim_id": { "type": "string", "pattern": "^clm_[0-9A-HJKMNP-TV-Z]{10}$" },
+    "verifier": { "type": "string" },
+    "tier": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "check": { "type": "string" },
+    "result": { "enum": ["pass", "fail", "inconclusive", "blocked"] },
+    "outcome": { "type": "string" },
+    "details": { "type": "string" },
+    "assertion": { "type": "object" },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["kind", "locator"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string" },
+        "locator": { "type": "string" },
+        "content_hash": { "type": "string" },
+        "repo": { "type": "string" },
+        "session_id": { "type": "string" },
+        "meta": {},
+        "created_at": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/ledger-entry.schema.json",
+  "title": "Credence ledger entry",
+  "description": "A signed, hash-chained decision or survival record. credence.ledger/0.9. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": ["spec", "seq", "kind", "claim_id", "claim_hash", "claim", "status", "verdict_hashes", "prev_entry_hash", "entry_hash", "signature", "created_at"],
+  "properties": {
+    "spec": { "const": "credence.ledger/0.9" },
+    "seq": { "type": "integer", "minimum": 1 },
+    "kind": { "enum": ["decision", "survival"] },
+    "claim_id": { "type": "string" },
+    "claim_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "claim": { "$ref": "claim.schema.json" },
+    "status": { "type": "string" },
+    "verdict_hashes": { "type": "array", "items": { "type": "string" } },
+    "attribution": { "$ref": "attribution.schema.json" },
+    "human_decision": {
+      "type": "object",
+      "required": ["decision", "by", "at"],
+      "properties": {
+        "decision": { "enum": ["accepted", "edited", "disputed", "rejected"] },
+        "by": { "type": "string" },
+        "reason": { "enum": ["overstated", "wrong_contributor", "not_valuable", "factually_wrong", "duplicate"] },
+        "note": { "type": "string" },
+        "edited_title": { "type": "string" },
+        "edited_statement": { "type": "string" },
+        "at": { "type": "string", "format": "date-time" }
+      },
+      "allOf": [{ "if": { "properties": { "decision": { "const": "disputed" } } }, "then": { "required": ["reason"] } }]
+    },
+    "survival": {
+      "type": "object",
+      "required": ["window", "result"],
+      "properties": {
+        "window": { "type": "string" },
+        "result": { "enum": ["surviving", "decayed", "reverted"] },
+        "ratio": { "type": "number" }
+      }
+    },
+    "repo": { "type": "string" },
+    "commits": { "type": "array", "items": { "type": "string" } },
+    "agent_config": { "type": "string" },
+    "prev_entry_hash": { "type": "string", "pattern": "^(sha256:[0-9a-f]{64})?$" },
+    "entry_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signature": { "type": "string", "pattern": "^ed25519:[0-9a-f]{12}:[A-Za-z0-9+/=]+$" },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

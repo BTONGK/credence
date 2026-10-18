@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/plugin.schema.json",
+  "title": "Credence verifier plugin protocol",
+  "description": "JSON-RPC 2.0 over stdio, one message per line. Licensed CC BY 4.0.",
+  "$defs": {
+    "describeResult": {
+      "type": "object",
+      "required": ["name", "tier", "checks"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "tier": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "checks": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "timeout_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "verifyParams": {
+      "type": "object",
+      "required": ["claim_id", "assertion", "budget_seconds"],
+      "properties": {
+        "claim_id": { "type": "string" },
+        "assertion": { "$ref": "claim.schema.json#/$defs/assertion" },
+        "workspace": { "type": "string", "description": "A clean detached worktree of the assertion's commit, removed after the call." },
+        "budget_seconds": { "type": "integer", "minimum": 1 },
+        "claim": { "$ref": "claim.schema.json" },
+        "repo": { "type": "string" },
+        "commit": { "type": "string" }
+      }
+    },
+    "verifyResult": {
+      "type": "object",
+      "required": ["result"],
+      "properties": {
+        "result": { "enum": ["pass", "fail", "inconclusive", "blocked"] },
+        "tier": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "outcome": { "type": "string" },
+        "details": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "object", "required": ["kind", "locator"], "properties": { "kind": { "type": "string" }, "locator": { "type": "string" } } }
+        },
+        "verifier": { "type": "string", "description": "name/version of the verifier, e.g. acme/mutation@0.1.0" }
+      }
+    }
+  }
+}

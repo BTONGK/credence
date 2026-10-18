@@ -1,0 +1,5 @@
+{"role": "user", "timestamp": "2026-10-03T10:00:00Z", "cwd": "/work/billing", "message": {"role": "user", "content": [{"type": "text", "text": "Add a CSV export for invoices."}]}}
+{"role": "assistant", "timestamp": "2026-10-03T10:00:04Z", "message": {"role": "assistant", "model": "gpt-5.5", "content": [{"type": "text", "text": "Adding export_csv to billing/export.py."}, {"type": "tool_use", "id": "tc_1", "name": "edit_file", "input": {"target_file": "billing/export.py", "code_edit": "def export_csv(invoices):\n    ..."}}]}}
+{"role": "user", "timestamp": "2026-10-03T10:00:05Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tc_1", "content": "Applied edit to billing/export.py"}]}}
+{"role": "assistant", "timestamp": "2026-10-03T10:00:09Z", "message": {"role": "assistant", "content": [{"type": "tool_use", "id": "tc_2", "name": "run_terminal_cmd", "input": {"command": "python3 -m pytest -q tests/test_export.py"}}]}}
+{"role": "user", "timestamp": "2026-10-03T10:00:12Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tc_2", "content": "3 passed in 0.05s"}]}}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/claim.schema.json",
+  "title": "Credence claim",
+  "description": "A falsifiable statement of contribution. credence.claim/0.9. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": ["spec", "id", "session_id", "claimant", "origin", "type", "title", "statement", "assertions", "evidence", "created_at"],
+  "properties": {
+    "spec": { "const": "credence.claim/0.9" },
+    "id": { "type": "string", "pattern": "^clm_[0-9A-HJKMNP-TV-Z]{10}$" },
+    "session_id": { "type": "string" },
+    "claimant": { "$ref": "#/$defs/contributor" },
+    "origin": { "enum": ["self", "auditor", "human"] },
+    "type": { "$ref": "#/$defs/claimType" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "statement": { "type": "string", "minLength": 1 },
+    "rationale": { "type": "string" },
+    "assertions": { "type": "array", "items": { "$ref": "#/$defs/assertion" } },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "evidence_hints": { "type": "array", "items": { "type": "string" } },
+    "co_contributors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": { "id": { "type": "string" }, "basis": { "type": "string" } },
+        "additionalProperties": false
+      }
+    },
+    "self_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "source_event": { "type": "integer", "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "signature": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "claimType": {
+      "enum": ["fix", "feature", "diagnosis", "test", "refactor", "docs", "review", "research", "ops", "decision", "negative_result"]
+    },
+    "contributor": {
+      "type": "string",
+      "pattern": "^(agent|subagent|human|auditor|tool|system):.+$"
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["target", "relation"],
+      "properties": {
+        "target": {
+          "type": "string",
+          "pattern": "^(event:[^#]+#[0-9]+(-[0-9]+)?|git:commit/[0-9a-f]{4,40}|file:[^@#]+(@[0-9a-fA-F]{4,40})?(#L[0-9]+-L[0-9]+)?|test_run:.+|ci:github/[^/]+/[^/]+/[0-9a-f]{7,40}|pr:github/[^/]+/[^#]+#[0-9]+|issue:github/[^/]+/[^#]+#[0-9]+|unresolved:.*)$"
+        },
+        "relation": { "enum": ["produced", "demonstrates", "informed"] },
+        "excerpt_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "assertion": {
+      "type": "object",
+      "required": ["check"],
+      "properties": {
+        "check": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string" },
+        "test": { "type": "string" },
+        "command": { "type": "string" },
+        "runs": { "type": "integer", "minimum": 1 },
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "path": { "type": "string" },
+        "overlay": { "type": "array", "items": { "type": "string" } },
+        "pr": { "type": "integer", "minimum": 1 },
+        "issue": { "type": "integer", "minimum": 1 },
+        "min": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_mutants": { "type": "integer", "minimum": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "check": { "const": "commit_touches" } } }, "then": { "required": ["commit", "paths"] } },
+        { "if": { "properties": { "check": { "enum": ["test_passes", "test_fails_before_passes_after", "mutation_score"] } } }, "then": { "anyOf": [{ "required": ["test"] }, { "required": ["command"] }] } },
+        { "if": { "properties": { "check": { "enum": ["command_passes", "command_fails_before_passes_after"] } } }, "then": { "required": ["command"] } },
+        { "if": { "properties": { "check": { "const": "pr_merged" } } }, "then": { "required": ["pr"] } },
+        { "if": { "properties": { "check": { "const": "issue_closed" } } }, "then": { "required": ["issue"] } }
+      ]
+    }
+  }
+}

@@ -1,0 +1,105 @@
+[
+  {
+    "name": "self-claim with assertions",
+    "claim": {
+      "spec": "credence.claim/0.9",
+      "id": "",
+      "session_id": "ses_3b2028956d",
+      "claimant": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+      "origin": "self",
+      "type": "fix",
+      "title": "Fixed race condition in job scheduler",
+      "statement": "test_concurrency fails at the parent of f7539d5 and passes at f7539d5 in 50 of 50 runs",
+      "assertions": [
+        {
+          "check": "test_fails_before_passes_after",
+          "commit": "f7539d5",
+          "runs": 50,
+          "test": "tests/test_scheduler.py::SchedulerTest::test_concurrency"
+        },
+        {
+          "check": "commit_touches",
+          "commit": "f7539d5",
+          "paths": [
+            "scheduler/queue.py"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "target": "git:commit/f7539d5edba1d12677c72372c3d7388d15ca2cfe",
+          "relation": "produced"
+        },
+        {
+          "target": "event:ses_3b2028956d#36-38",
+          "relation": "produced",
+          "note": "scheduler/queue.py"
+        }
+      ],
+      "co_contributors": [
+        {
+          "id": "human:maya",
+          "basis": "identified the failing test in the first prompt"
+        }
+      ],
+      "self_confidence": 0.85,
+      "source_event": 57,
+      "created_at": "2026-10-18T05:37:51.015449Z"
+    },
+    "content_hash": "sha256:d436bb6d698a1fa6ab2f9c065cac4a3bf98dd2edd4f740a0edc075eecd7dadc5",
+    "id": "clm_TGVBPVB9H8"
+  },
+  {
+    "name": "auditor claim",
+    "claim": {
+      "spec": "credence.claim/0.9",
+      "id": "",
+      "session_id": "ses_3b2028956d",
+      "claimant": "auditor:rules@0.9",
+      "origin": "auditor",
+      "type": "ops",
+      "title": "CI: stress the concurrency test 20 times per run",
+      "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+      "assertions": [
+        {
+          "check": "commit_touches",
+          "commit": "7ba509d",
+          "paths": [
+            ".github/workflows/ci.yml"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "target": "git:commit/7ba509d",
+          "relation": "produced"
+        },
+        {
+          "target": "event:ses_3b2028956d#51-55",
+          "relation": "produced"
+        }
+      ],
+      "created_at": "2026-10-18T05:37:51.015449Z"
+    },
+    "content_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+    "id": "clm_G6JRWRMM9J"
+  },
+  {
+    "name": "human negative result with HTML characters",
+    "claim": {
+      "spec": "credence.claim/0.9",
+      "id": "",
+      "session_id": "ses_3b2028956d",
+      "claimant": "human:maya",
+      "origin": "human",
+      "type": "negative_result",
+      "title": "Retries in _take hide the race",
+      "statement": "Retrying popleft does not fix lost completions \u003c\u0026\u003e",
+      "assertions": [],
+      "evidence": [],
+      "created_at": "2026-10-18T05:37:51.015449Z"
+    },
+    "content_hash": "sha256:52bd8b8abecd455948eb5a6a112c075f9d4c003193261599dcf93986c9753a5c",
+    "id": "clm_AAYRQ2NYSN"
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "keys are sorted by byte value",
+    "value": {
+      "B": 3,
+      "a": 2,
+      "aa": 4,
+      "b": 1
+    },
+    "canonical": "{\"B\":3,\"a\":2,\"aa\":4,\"b\":1}",
+    "hash": "sha256:3781f4cbaf14701f3ec9bee8f2e4ba53b0cfc3c2bff61011e08fa1de0f6e6858"
+  },
+  {
+    "name": "nested objects and arrays keep array order",
+    "value": {
+      "y": {
+        "c": null,
+        "d": true
+      },
+      "z": [
+        3,
+        1,
+        2
+      ]
+    },
+    "canonical": "{\"y\":{\"c\":null,\"d\":true},\"z\":[3,1,2]}",
+    "hash": "sha256:30643419d1c85cc8cb311ebed3915c4ab1f4c25b59ec56b0a5ee7114617b4c6f"
+  },
+  {
+    "name": "no HTML escaping",
+    "value": {
+      "cmd": "a < b && c > d"
+    },
+    "canonical": "{\"cmd\":\"a < b && c > d\"}",
+    "hash": "sha256:bc7eae08b3df025cdc1ad47208334f6789cdd14e42fa023b0a2f6d78d1095f13"
+  },
+  {
+    "name": "unicode is written as UTF-8",
+    "value": {
+      "emoji": "✓",
+      "name": "Zoë"
+    },
+    "canonical": "{\"emoji\":\"✓\",\"name\":\"Zoë\"}",
+    "hash": "sha256:18d730d06b77b4805f9813020543de46ec7ab3720bf12f0ce0893ebf0ddd7dfc"
+  },
+  {
+    "name": "numbers in shortest form",
+    "value": {
+      "n": 50,
+      "neg": -2.5,
+      "p": 0.85,
+      "small": 1e-7
+    },
+    "canonical": "{\"n\":50,\"neg\":-2.5,\"p\":0.85,\"small\":1e-7}",
+    "hash": "sha256:5abeaa9b1994a12aa7328c71b71d0f733d03591fc9b6ae16039aa7e5f462871b"
+  },
+  {
+    "name": "empty containers",
+    "value": {
+      "a": [],
+      "o": {}
+    },
+    "canonical": "{\"a\":[],\"o\":{}}",
+    "hash": "sha256:9bee7ebfc94b459dacb8cbc72cb2900e61f0aa42189df18329f84f92568f4f89"
+  }
+]

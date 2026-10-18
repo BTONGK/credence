@@ -1,0 +1,699 @@
+{
+  "description": "A two-entry ledger signed with the Ed25519 key derived from a seed of 32 bytes of 0x07. The valid export MUST verify; each tampered export MUST fail with the named problem.",
+  "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+  "valid": {
+    "spec": "credence.ledger/0.9",
+    "exported_at": "2026-10-18T06:00:00Z",
+    "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+    "key_id": "fe812c12f3ab",
+    "head": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+    "entries": [
+      {
+        "spec": "credence.ledger/0.9",
+        "seq": 1,
+        "kind": "decision",
+        "claim_id": "clm_TGVBPVB9H8",
+        "claim_hash": "sha256:d436bb6d698a1fa6ab2f9c065cac4a3bf98dd2edd4f740a0edc075eecd7dadc5",
+        "claim": {
+          "spec": "credence.claim/0.9",
+          "id": "clm_TGVBPVB9H8",
+          "session_id": "ses_3b2028956d",
+          "claimant": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+          "origin": "self",
+          "type": "fix",
+          "title": "Fixed race condition in job scheduler",
+          "statement": "test_concurrency fails at the parent of f7539d5 and passes at f7539d5 in 50 of 50 runs",
+          "assertions": [
+            {
+              "check": "test_fails_before_passes_after",
+              "commit": "f7539d5",
+              "runs": 50,
+              "test": "tests/test_scheduler.py::SchedulerTest::test_concurrency"
+            },
+            {
+              "check": "commit_touches",
+              "commit": "f7539d5",
+              "paths": [
+                "scheduler/queue.py"
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "target": "git:commit/f7539d5edba1d12677c72372c3d7388d15ca2cfe",
+              "relation": "produced"
+            },
+            {
+              "target": "event:ses_3b2028956d#36-38",
+              "relation": "produced",
+              "note": "scheduler/queue.py"
+            }
+          ],
+          "co_contributors": [
+            {
+              "id": "human:maya",
+              "basis": "identified the failing test in the first prompt"
+            }
+          ],
+          "self_confidence": 0.85,
+          "source_event": 57,
+          "created_at": "2026-10-18T05:37:51.015449Z"
+        },
+        "status": "verified",
+        "verdict_hashes": [],
+        "attribution": {
+          "claim_id": "clm_TGVBPVB9H8",
+          "shares": [
+            {
+              "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+              "share": 1,
+              "basis": "wrote lines"
+            }
+          ],
+          "method": "line_provenance"
+        },
+        "human_decision": {
+          "decision": "accepted",
+          "by": "human:maya",
+          "at": "2026-10-18T06:00:00Z"
+        },
+        "commits": [
+          "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+        ],
+        "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+        "prev_entry_hash": "",
+        "entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+        "signature": "ed25519:fe812c12f3ab:HlRdgKns9JJl8y6ngVGgmsc4uPNsUj5LVx1aR1kCvAgWnkbSh0TFwlKd0xMPjj4hyYmLZCiJCDJXeVHvj72nCg==",
+        "created_at": "2026-10-18T06:00:00Z"
+      },
+      {
+        "spec": "credence.ledger/0.9",
+        "seq": 2,
+        "kind": "decision",
+        "claim_id": "clm_G6JRWRMM9J",
+        "claim_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+        "claim": {
+          "spec": "credence.claim/0.9",
+          "id": "clm_G6JRWRMM9J",
+          "session_id": "ses_3b2028956d",
+          "claimant": "auditor:rules@0.9",
+          "origin": "auditor",
+          "type": "ops",
+          "title": "CI: stress the concurrency test 20 times per run",
+          "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+          "assertions": [
+            {
+              "check": "commit_touches",
+              "commit": "7ba509d",
+              "paths": [
+                ".github/workflows/ci.yml"
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "target": "git:commit/7ba509d",
+              "relation": "produced"
+            },
+            {
+              "target": "event:ses_3b2028956d#51-55",
+              "relation": "produced"
+            }
+          ],
+          "created_at": "2026-10-18T05:37:51.015449Z"
+        },
+        "status": "verified",
+        "verdict_hashes": [],
+        "attribution": {
+          "claim_id": "clm_G6JRWRMM9J",
+          "shares": [
+            {
+              "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+              "share": 1,
+              "basis": "wrote lines"
+            }
+          ],
+          "method": "line_provenance"
+        },
+        "human_decision": {
+          "decision": "disputed",
+          "by": "human:maya",
+          "reason": "not_valuable",
+          "at": "2026-10-18T06:01:00Z"
+        },
+        "commits": [
+          "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+        ],
+        "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+        "prev_entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+        "entry_hash": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+        "signature": "ed25519:fe812c12f3ab:V7R0kRd/8iFJqGP/IAyd4LBcYuSAXP3FAmTs3AulwHiDVicmcPRtFG0A3D39Ue0t+4exzpTrenjNRL5zSVePAg==",
+        "created_at": "2026-10-18T06:01:00Z"
+      }
+    ]
+  },
+  "tampered": [
+    {
+      "name": "decision changed after signing",
+      "export": {
+        "spec": "credence.ledger/0.9",
+        "exported_at": "2026-10-18T06:00:00Z",
+        "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+        "key_id": "fe812c12f3ab",
+        "head": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+        "entries": [
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 1,
+            "kind": "decision",
+            "claim_id": "clm_TGVBPVB9H8",
+            "claim_hash": "sha256:d436bb6d698a1fa6ab2f9c065cac4a3bf98dd2edd4f740a0edc075eecd7dadc5",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_TGVBPVB9H8",
+              "session_id": "ses_3b2028956d",
+              "claimant": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+              "origin": "self",
+              "type": "fix",
+              "title": "Fixed race condition in job scheduler",
+              "statement": "test_concurrency fails at the parent of f7539d5 and passes at f7539d5 in 50 of 50 runs",
+              "assertions": [
+                {
+                  "check": "test_fails_before_passes_after",
+                  "commit": "f7539d5",
+                  "runs": 50,
+                  "test": "tests/test_scheduler.py::SchedulerTest::test_concurrency"
+                },
+                {
+                  "check": "commit_touches",
+                  "commit": "f7539d5",
+                  "paths": [
+                    "scheduler/queue.py"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/f7539d5edba1d12677c72372c3d7388d15ca2cfe",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#36-38",
+                  "relation": "produced",
+                  "note": "scheduler/queue.py"
+                }
+              ],
+              "co_contributors": [
+                {
+                  "id": "human:maya",
+                  "basis": "identified the failing test in the first prompt"
+                }
+              ],
+              "self_confidence": 0.85,
+              "source_event": 57,
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_TGVBPVB9H8",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "rejected",
+              "by": "human:maya",
+              "at": "2026-10-18T06:00:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "",
+            "entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "signature": "ed25519:fe812c12f3ab:HlRdgKns9JJl8y6ngVGgmsc4uPNsUj5LVx1aR1kCvAgWnkbSh0TFwlKd0xMPjj4hyYmLZCiJCDJXeVHvj72nCg==",
+            "created_at": "2026-10-18T06:00:00Z"
+          },
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 2,
+            "kind": "decision",
+            "claim_id": "clm_G6JRWRMM9J",
+            "claim_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_G6JRWRMM9J",
+              "session_id": "ses_3b2028956d",
+              "claimant": "auditor:rules@0.9",
+              "origin": "auditor",
+              "type": "ops",
+              "title": "CI: stress the concurrency test 20 times per run",
+              "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+              "assertions": [
+                {
+                  "check": "commit_touches",
+                  "commit": "7ba509d",
+                  "paths": [
+                    ".github/workflows/ci.yml"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/7ba509d",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#51-55",
+                  "relation": "produced"
+                }
+              ],
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_G6JRWRMM9J",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "disputed",
+              "by": "human:maya",
+              "reason": "not_valuable",
+              "at": "2026-10-18T06:01:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "entry_hash": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+            "signature": "ed25519:fe812c12f3ab:V7R0kRd/8iFJqGP/IAyd4LBcYuSAXP3FAmTs3AulwHiDVicmcPRtFG0A3D39Ue0t+4exzpTrenjNRL5zSVePAg==",
+            "created_at": "2026-10-18T06:01:00Z"
+          }
+        ]
+      },
+      "problem": "entry_hash does not match its content"
+    },
+    {
+      "name": "first entry removed",
+      "export": {
+        "spec": "credence.ledger/0.9",
+        "exported_at": "2026-10-18T06:00:00Z",
+        "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+        "key_id": "fe812c12f3ab",
+        "head": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+        "entries": [
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 2,
+            "kind": "decision",
+            "claim_id": "clm_G6JRWRMM9J",
+            "claim_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_G6JRWRMM9J",
+              "session_id": "ses_3b2028956d",
+              "claimant": "auditor:rules@0.9",
+              "origin": "auditor",
+              "type": "ops",
+              "title": "CI: stress the concurrency test 20 times per run",
+              "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+              "assertions": [
+                {
+                  "check": "commit_touches",
+                  "commit": "7ba509d",
+                  "paths": [
+                    ".github/workflows/ci.yml"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/7ba509d",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#51-55",
+                  "relation": "produced"
+                }
+              ],
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_G6JRWRMM9J",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "disputed",
+              "by": "human:maya",
+              "reason": "not_valuable",
+              "at": "2026-10-18T06:01:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "entry_hash": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+            "signature": "ed25519:fe812c12f3ab:V7R0kRd/8iFJqGP/IAyd4LBcYuSAXP3FAmTs3AulwHiDVicmcPRtFG0A3D39Ue0t+4exzpTrenjNRL5zSVePAg==",
+            "created_at": "2026-10-18T06:01:00Z"
+          }
+        ]
+      },
+      "problem": "prev_entry_hash does not match the previous entry"
+    },
+    {
+      "name": "claim snapshot edited and re-signed",
+      "export": {
+        "spec": "credence.ledger/0.9",
+        "exported_at": "2026-10-18T06:00:00Z",
+        "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+        "key_id": "fe812c12f3ab",
+        "head": "sha256:7f7ae67e5a3d69e6603f4433cce0dc9f69d34dbb061b404bea4f3dacb5ca87a5",
+        "entries": [
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 1,
+            "kind": "decision",
+            "claim_id": "clm_TGVBPVB9H8",
+            "claim_hash": "sha256:d436bb6d698a1fa6ab2f9c065cac4a3bf98dd2edd4f740a0edc075eecd7dadc5",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_TGVBPVB9H8",
+              "session_id": "ses_3b2028956d",
+              "claimant": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+              "origin": "self",
+              "type": "fix",
+              "title": "Fixed race condition in job scheduler",
+              "statement": "test_concurrency fails at the parent of f7539d5 and passes at f7539d5 in 50 of 50 runs",
+              "assertions": [
+                {
+                  "check": "test_fails_before_passes_after",
+                  "commit": "f7539d5",
+                  "runs": 50,
+                  "test": "tests/test_scheduler.py::SchedulerTest::test_concurrency"
+                },
+                {
+                  "check": "commit_touches",
+                  "commit": "f7539d5",
+                  "paths": [
+                    "scheduler/queue.py"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/f7539d5edba1d12677c72372c3d7388d15ca2cfe",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#36-38",
+                  "relation": "produced",
+                  "note": "scheduler/queue.py"
+                }
+              ],
+              "co_contributors": [
+                {
+                  "id": "human:maya",
+                  "basis": "identified the failing test in the first prompt"
+                }
+              ],
+              "self_confidence": 0.85,
+              "source_event": 57,
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_TGVBPVB9H8",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "accepted",
+              "by": "human:maya",
+              "at": "2026-10-18T06:00:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "",
+            "entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "signature": "ed25519:fe812c12f3ab:HlRdgKns9JJl8y6ngVGgmsc4uPNsUj5LVx1aR1kCvAgWnkbSh0TFwlKd0xMPjj4hyYmLZCiJCDJXeVHvj72nCg==",
+            "created_at": "2026-10-18T06:00:00Z"
+          },
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 2,
+            "kind": "decision",
+            "claim_id": "clm_G6JRWRMM9J",
+            "claim_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_G6JRWRMM9J",
+              "session_id": "ses_3b2028956d",
+              "claimant": "auditor:rules@0.9",
+              "origin": "auditor",
+              "type": "ops",
+              "title": "Something grander",
+              "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+              "assertions": [
+                {
+                  "check": "commit_touches",
+                  "commit": "7ba509d",
+                  "paths": [
+                    ".github/workflows/ci.yml"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/7ba509d",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#51-55",
+                  "relation": "produced"
+                }
+              ],
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_G6JRWRMM9J",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "disputed",
+              "by": "human:maya",
+              "reason": "not_valuable",
+              "at": "2026-10-18T06:01:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "entry_hash": "sha256:7f7ae67e5a3d69e6603f4433cce0dc9f69d34dbb061b404bea4f3dacb5ca87a5",
+            "signature": "ed25519:fe812c12f3ab:2Uso2YH/y4O6QW31SX4A3vuZovpF7R88I7RSvL+jycSgUm3DOZXSS0mIWPPeoNifQqEHhDdaRLW/LBd5BzXYBw==",
+            "created_at": "2026-10-18T06:01:00Z"
+          }
+        ]
+      },
+      "problem": "claim snapshot does not match claim_hash"
+    },
+    {
+      "name": "entry signed by another key",
+      "export": {
+        "spec": "credence.ledger/0.9",
+        "exported_at": "2026-10-18T06:00:00Z",
+        "public_key": "ed25519:6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=",
+        "key_id": "fe812c12f3ab",
+        "head": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+        "entries": [
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 1,
+            "kind": "decision",
+            "claim_id": "clm_TGVBPVB9H8",
+            "claim_hash": "sha256:d436bb6d698a1fa6ab2f9c065cac4a3bf98dd2edd4f740a0edc075eecd7dadc5",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_TGVBPVB9H8",
+              "session_id": "ses_3b2028956d",
+              "claimant": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+              "origin": "self",
+              "type": "fix",
+              "title": "Fixed race condition in job scheduler",
+              "statement": "test_concurrency fails at the parent of f7539d5 and passes at f7539d5 in 50 of 50 runs",
+              "assertions": [
+                {
+                  "check": "test_fails_before_passes_after",
+                  "commit": "f7539d5",
+                  "runs": 50,
+                  "test": "tests/test_scheduler.py::SchedulerTest::test_concurrency"
+                },
+                {
+                  "check": "commit_touches",
+                  "commit": "f7539d5",
+                  "paths": [
+                    "scheduler/queue.py"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/f7539d5edba1d12677c72372c3d7388d15ca2cfe",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#36-38",
+                  "relation": "produced",
+                  "note": "scheduler/queue.py"
+                }
+              ],
+              "co_contributors": [
+                {
+                  "id": "human:maya",
+                  "basis": "identified the failing test in the first prompt"
+                }
+              ],
+              "self_confidence": 0.85,
+              "source_event": 57,
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_TGVBPVB9H8",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "accepted",
+              "by": "human:maya",
+              "at": "2026-10-18T06:00:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "",
+            "entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "signature": "ed25519:fe812c12f3ab:HlRdgKns9JJl8y6ngVGgmsc4uPNsUj5LVx1aR1kCvAgWnkbSh0TFwlKd0xMPjj4hyYmLZCiJCDJXeVHvj72nCg==",
+            "created_at": "2026-10-18T06:00:00Z"
+          },
+          {
+            "spec": "credence.ledger/0.9",
+            "seq": 2,
+            "kind": "decision",
+            "claim_id": "clm_G6JRWRMM9J",
+            "claim_hash": "sha256:81a58e62944cb395ffa6aee36bf2f57bedcf53e70a018fc6538f222204d4bd95",
+            "claim": {
+              "spec": "credence.claim/0.9",
+              "id": "clm_G6JRWRMM9J",
+              "session_id": "ses_3b2028956d",
+              "claimant": "auditor:rules@0.9",
+              "origin": "auditor",
+              "type": "ops",
+              "title": "CI: stress the concurrency test 20 times per run",
+              "statement": "Commit 7ba509d changes .github/workflows/ci.yml (+2 −0)",
+              "assertions": [
+                {
+                  "check": "commit_touches",
+                  "commit": "7ba509d",
+                  "paths": [
+                    ".github/workflows/ci.yml"
+                  ]
+                }
+              ],
+              "evidence": [
+                {
+                  "target": "git:commit/7ba509d",
+                  "relation": "produced"
+                },
+                {
+                  "target": "event:ses_3b2028956d#51-55",
+                  "relation": "produced"
+                }
+              ],
+              "created_at": "2026-10-18T05:37:51.015449Z"
+            },
+            "status": "verified",
+            "verdict_hashes": [],
+            "attribution": {
+              "claim_id": "clm_G6JRWRMM9J",
+              "shares": [
+                {
+                  "contributor": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+                  "share": 1,
+                  "basis": "wrote lines"
+                }
+              ],
+              "method": "line_provenance"
+            },
+            "human_decision": {
+              "decision": "disputed",
+              "by": "human:maya",
+              "reason": "not_valuable",
+              "at": "2026-10-18T06:01:00Z"
+            },
+            "commits": [
+              "f7539d5edba1d12677c72372c3d7388d15ca2cfe"
+            ],
+            "agent_config": "agent:claude-code/claude-opus-5-5@cfg_82c2",
+            "prev_entry_hash": "sha256:5562657689e2a289f075e8aba531ca175b52b5fc3e7a0b374bccf2c61101a3ec",
+            "entry_hash": "sha256:c81e954165afe243a6fee148663372c39dc4bfac1d708b7fd9b3c01854606d23",
+            "signature": "ed25519:dbc298251c51:J2V6HXLh2hmP7mQn0oKvlI81nWaIhn5P0ODxFrUljb59JGII/rnn0C0DhfPpvLlYF2Y59f6hr136Z5P04VF1DA==",
+            "created_at": "2026-10-18T06:01:00Z"
+          }
+        ]
+      },
+      "problem": "signed by a different key"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/event.schema.json",
+  "title": "Credence event",
+  "description": "One normalized, hash-chained session step. credence.event/0.9. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": ["session_id", "seq", "ts", "kind", "actor", "payload", "payload_ref", "hash", "prev_hash"],
+  "properties": {
+    "session_id": { "type": "string", "pattern": "^ses_[0-9a-f]{10}$" },
+    "seq": { "type": "integer", "minimum": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "kind": {
+      "enum": ["session_start", "prompt", "message", "reasoning", "tool_call", "tool_result", "file_read", "file_edit", "search",
+        "command", "subagent_start", "subagent_stop", "commit", "claim_filed", "compaction", "session_end", "hook"]
+    },
+    "actor": { "type": "string" },
+    "payload": { "type": "object" },
+    "payload_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "src_path": { "type": "string" },
+    "src_line": { "type": "integer" },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "prev_hash": { "type": "string", "pattern": "^(sha256:[0-9a-f]{64})?$" }
+  },
+  "additionalProperties": false
+}

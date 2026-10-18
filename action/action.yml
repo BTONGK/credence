@@ -1,0 +1,59 @@
+name: Credence PR comment
+description: Comment on a pull request with the signed, human-reviewed agent claims recorded for its commits.
+author: Credence contributors
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  trusted-keys:
+    description: >
+      Comma-separated signing key ids (shown by `credence ledger verify`) or
+      `ed25519:` public keys whose reviews count. Entries signed by any other
+      key are flagged. Prefer a repository variable, which a pull request
+      cannot change.
+    default: ''
+  version:
+    description: "Credence version to install (a tag, commit or `latest`). Defaults to the ref this action was used at."
+    default: ''
+  token:
+    description: "Token used to post the comment. Needs `pull-requests: write`."
+    default: ${{ github.token }}
+  dry-run:
+    description: Print the comment to the log instead of posting it.
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: stable
+        cache: false
+
+    - name: Install credence
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version || github.action_ref || 'latest' }}
+        GOTOOLCHAIN: auto
+      run: go install "github.com/BTONGK/credence/cmd/credence@${VERSION}"
+
+    - name: Fetch history and Credence notes
+      shell: bash
+      run: |
+        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+          git fetch --quiet --unshallow origin
+        fi
+        git fetch --quiet origin '+refs/notes/credence:refs/notes/credence' \
+          || echo "::notice::origin has no refs/notes/credence yet; reviewers push it with: git push origin refs/notes/credence"
+
+    - name: Comment
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        CREDENCE_TRUSTED_KEYS: ${{ inputs.trusted-keys }}
+        DRY_RUN: ${{ inputs.dry-run }}
+      run: |
+        args=()
+        if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+        credence pr-comment "${args[@]}"

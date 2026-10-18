@@ -1,0 +1,15 @@
+{
+  "spec": "credence.plugin-registry/0.9",
+  "plugins": [
+    {
+      "name": "todos",
+      "description": "Fails a claim whose commit adds TODO, FIXME, XXX or HACK markers.",
+      "checks": ["no_new_todos"],
+      "tier": 1,
+      "source": "https://github.com/BTONGK/credence/tree/main/plugins",
+      "bundled": "no_new_todos.py",
+      "command": ["python3", "{path}"],
+      "requires": ["python3"]
+    }
+  ]
+}

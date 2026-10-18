@@ -1,0 +1,83 @@
+{
+  "harness": "generic",
+  "harness_session_id": "aider-2026-10-04",
+  "reported_harness": "aider",
+  "cwd": "/work/billing",
+  "model": "gpt-5.5",
+  "started_at": "2026-10-04T08:00:00Z",
+  "tokens": [
+    800,
+    60,
+    0,
+    0
+  ],
+  "events": [
+    {
+      "line": 1,
+      "ts": "2026-10-04T08:00:00Z",
+      "kind": "session_start",
+      "role": "system",
+      "payload": {
+        "cwd": "/work/billing"
+      }
+    },
+    {
+      "line": 1,
+      "ts": "2026-10-04T08:00:00Z",
+      "kind": "prompt",
+      "role": "human",
+      "payload": {
+        "text": "Document the discount rules in README.md"
+      }
+    },
+    {
+      "line": 2,
+      "ts": "2026-10-04T08:00:03Z",
+      "kind": "message",
+      "role": "agent",
+      "payload": {
+        "text": "I'll update README.md."
+      }
+    },
+    {
+      "line": 2,
+      "ts": "2026-10-04T08:00:03Z",
+      "kind": "file_edit",
+      "role": "agent",
+      "payload": {
+        "added": 1,
+        "added_line_hashes": [
+          "e59e3f24bbeddeed"
+        ],
+        "op": "create",
+        "path": "README.md",
+        "removed": 0,
+        "tool": "write_file",
+        "tool_call_id": "call_1"
+      }
+    },
+    {
+      "line": 3,
+      "ts": "2026-10-04T08:00:04Z",
+      "kind": "tool_result",
+      "role": "tool",
+      "payload": {
+        "call_kind": "file_edit",
+        "ok": true,
+        "output": "wrote README.md",
+        "output_len": 15,
+        "tool": "write_file",
+        "tool_call_id": "call_1"
+      }
+    },
+    {
+      "line": 4,
+      "ts": "2026-10-04T08:00:06Z",
+      "kind": "message",
+      "role": "agent",
+      "payload": {
+        "text": "Documented the discount rules."
+      }
+    }
+  ]
+}

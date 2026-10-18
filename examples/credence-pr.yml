@@ -1,0 +1,20 @@
+# Copy to .github/workflows/credence.yml in your repository.
+name: Credence
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: BTONGK/credence/action@main
+        with:
+          # Key ids of the people whose reviews should count, e.g. "3f9a0c1d22be,8812ab04c9e1".
+          trusted-keys: ${{ vars.CREDENCE_TRUSTED_KEYS }}

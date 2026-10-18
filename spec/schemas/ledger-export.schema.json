@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BTONGK/credence/main/spec/schemas/ledger-export.schema.json",
+  "title": "Credence ledger export",
+  "description": "Output of credence export --format json. Verifiable offline with the embedded public key. Licensed CC BY 4.0.",
+  "type": "object",
+  "required": [
+    "spec",
+    "exported_at",
+    "public_key",
+    "key_id",
+    "head",
+    "entries"
+  ],
+  "properties": {
+    "spec": {
+      "const": "credence.ledger/0.9"
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "public_key": {
+      "type": "string",
+      "pattern": "^ed25519:[A-Za-z0-9+/=]+$"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$"
+    },
+    "head": {
+      "type": "string"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "ledger-entry.schema.json"
+      }
+    },
+    "person_opt_in": {
+      "type": "object",
+      "required": [
+        "person",
+        "head",
+        "signature"
+      ],
+      "description": "Signed consent to appear by name in team rollups (spec section 8.3).",
+      "properties": {
+        "person": {
+          "type": "string",
+          "pattern": "^human:"
+        },
+        "head": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^ed25519:[0-9a-f]{12}:"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
