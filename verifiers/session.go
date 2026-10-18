@@ -230,9 +230,9 @@ func checkEdits(d *claims.Data, a spec.Assertion, statement string) []sessionRes
 		case len(hit) == 0:
 			return one(failed("path_not_changed", "The session left %s unchanged.", joinNames(miss)))
 		case len(miss) > 0:
-			return one(unknown("some_paths", "%s %s changed; %s stayed the same.", joinNames(hit), wasWere(len(hit)), joinNames(miss)))
+			return one(unknown("some_paths", "The session changed %s; %s stayed the same.", joinNames(hit), joinNames(miss)))
 		}
-		return one(passed("paths_changed", "%s %s changed in the session.", joinNames(hit), wasWere(len(hit))))
+		return one(passed("paths_changed", "The session changed %s.", joinNames(hit)))
 	}
 
 	// Without a file name, the change has to match what the sentence is

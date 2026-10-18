@@ -11,15 +11,12 @@ import (
 	"github.com/BTONGK/credence/daemon/ledger"
 	"github.com/BTONGK/credence/daemon/pipeline"
 	"github.com/BTONGK/credence/daemon/store"
+	"github.com/BTONGK/credence/daemon/view"
 	"github.com/BTONGK/credence/internal/config"
 	"github.com/BTONGK/credence/internal/keys"
-	"github.com/BTONGK/credence/spec"
 )
 
 func TestDemoEndToEnd(t *testing.T) {
-	if testing.Short() {
-		t.Skip("runs real tests in worktrees")
-	}
 	homeDir := t.TempDir()
 	t.Setenv("CREDENCE_HOME", homeDir)
 	dir, _ := filepath.EvalSymlinks(t.TempDir())
@@ -44,39 +41,33 @@ func TestDemoEndToEnd(t *testing.T) {
 		t.Fatal(err)
 	}
 	pe := &pipeline.Engine{Store: st, Cfg: cfg, Ledger: &ledger.Ledger{Store: st, Signer: signer}, Log: logger}
-	sum, err := pe.Report(ctx, sid, pipeline.Options{Final: true})
+	if _, err := pe.Report(ctx, sid, pipeline.Options{Final: true}); err != nil {
+		t.Fatal(err)
+	}
+	rep, err := view.BuildReport(st, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("summary: %+v", sum)
-	rows, _ := st.SessionClaims(sid)
-	bySection := map[string][]string{}
-	for _, r := range rows {
-		vs, _ := st.Verdicts(r.Claim.ID, -1)
-		t.Logf("[%s] %-18s %-12s primary=%v %s/%s %q flags=%v notes=%v", r.Section, r.Claim.Origin, r.Claim.Type, r.Primary, r.Status, r.ReviewState, r.Claim.Title, r.Flags, r.Notes)
-		for _, v := range vs {
-			t.Logf("      t%d %s/%s %s %s: %s", v.Tier, v.Verifier, v.Check, v.Result, v.Outcome, v.Details)
-		}
-		if a, _ := st.GetAttribution(r.Claim.ID); a != nil {
-			t.Logf("      attribution %s %+v", a.Method, a.Shares)
-		}
-		if r.Primary {
-			bySection[r.Section] = append(bySection[r.Section], r.Claim.Title)
-		}
+	got := map[string]string{}
+	for _, c := range Claims(st, rep) {
+		t.Logf("%-12s %s\n             %s", c.Verdict, c.DisplayTitle, c.Reason)
+		got[c.Claim.Statement] = c.Verdict
 	}
 	want := map[string]string{
-		"Fixed race condition in job scheduler":               spec.SectionVerified,
-		"Diagnosed check-then-pop race in JobQueue._take":     spec.SectionVerified,
-		"Added regression test for concurrent job completion": spec.SectionUnverified,
-		"All tests pass after the fix":                        spec.SectionContradicted,
-		"Retrying popleft in _take does not fix the flake":    spec.SectionFailures,
+		"I added the holiday hours to `index.html`.":            view.VerdictBacked,
+		"I made the homepage easier to read on phones.":         view.VerdictPartly,
+		"I also fixed the Instagram link in `footer.html`.":     view.VerdictContradicted,
+		"I added a cake order form to `contact.html`.":          view.VerdictBacked,
+		"All 6 tests pass.":                                     view.VerdictContradicted,
+		"The site is live at https://sunrise-bakery.pages.dev.": view.VerdictBacked,
+		"I updated your holiday hours on Google.":               view.VerdictUnchecked,
 	}
-	for _, r := range rows {
-		if exp, ok := want[r.Claim.Title]; ok && r.Primary && r.Section != exp {
-			t.Errorf("%q in %s, want %s", r.Claim.Title, r.Section, exp)
+	for s, v := range want {
+		if got[s] != v {
+			t.Errorf("%q: verdict %q, want %q", s, got[s], v)
 		}
 	}
-	if len(bySection[spec.SectionAuditor]) == 0 {
-		t.Errorf("expected the CI change to be found by the auditor")
+	if len(got) != len(want) {
+		t.Errorf("%d claims, want %d", len(got), len(want))
 	}
 }

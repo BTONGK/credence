@@ -508,6 +508,12 @@ func Episodes(d *claims.Data) []Episode {
 			cur.Label = fmt.Sprintf("read %s%s", plural(cur.Count, "file"), dirOf(files))
 		case "search":
 			cur.Label = fmt.Sprintf("searched %s", plural(cur.Count, "time"))
+		case "tool":
+			if names := uniqStrings(files); len(names) == 1 {
+				cur.Label = "used " + toolName(names[0])
+			} else {
+				cur.Label = fmt.Sprintf("used %s", plural(len(names), "tool"))
+			}
 		case "test":
 			cur.Label = fmt.Sprintf("ran tests %s", times(cur.Count))
 			if cur.Failures > 0 {
@@ -595,7 +601,8 @@ func Episodes(d *claims.Data) []Episode {
 		case spec.KindCompaction:
 			single(e, "compaction", "context compacted", "")
 		case spec.KindToolCall:
-			group(e, "search")
+			group(e, "tool")
+			files = append(files, s("tool"))
 		}
 	}
 	flush()
@@ -603,6 +610,20 @@ func Episodes(d *claims.Data) []Episode {
 		out = []Episode{}
 	}
 	return out
+}
+
+// toolName names a tool for people: "mcp__google_business__update_hours" is
+// "the google business update hours tool".
+func toolName(name string) string {
+	if !strings.HasPrefix(name, "mcp__") {
+		return "the " + orStr(name, "a") + " tool"
+	}
+	parts := strings.Split(strings.TrimPrefix(name, "mcp__"), "__")
+	server := strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(parts[0], "claude_ai_"), "plugin_"), "_", " ")
+	if len(parts) > 1 {
+		return "the " + server + " " + strings.ReplaceAll(parts[len(parts)-1], "_", " ") + " tool"
+	}
+	return "the " + server + " tool"
 }
 
 func boolOf(v any) bool { b, _ := v.(bool); return b }

@@ -53,8 +53,10 @@ func Root(dir string) string {
 	}
 	root := ""
 	if st, err := os.Stat(dir); err == nil && st.IsDir() {
-		if out, err := Run(dir, "rev-parse", "--show-toplevel"); err == nil {
-			root = out
+		if mayBeRepo(dir) {
+			if out, err := Run(dir, "rev-parse", "--show-toplevel"); err == nil {
+				root = out
+			}
 		}
 	} else if err == nil {
 		root = Root(filepath.Dir(dir))
@@ -70,6 +72,31 @@ func Root(dir string) string {
 	}
 	rootCache.Store(dir, root)
 	return root
+}
+
+// mayBeRepo reports a .git entry in dir or a parent below any
+// GIT_CEILING_DIRECTORIES entry. Folders outside every repo skip running
+// git, which on a Mac without developer tools opens an install prompt.
+func mayBeRepo(dir string) bool {
+	if os.Getenv("GIT_DIR") != "" {
+		return true
+	}
+	ceilings := map[string]bool{}
+	for _, c := range filepath.SplitList(os.Getenv("GIT_CEILING_DIRECTORIES")) {
+		if c != "" {
+			ceilings[filepath.Clean(c)] = true
+		}
+	}
+	for d := filepath.Clean(dir); ; {
+		if _, err := os.Lstat(filepath.Join(d, ".git")); err == nil {
+			return true
+		}
+		parent := filepath.Dir(d)
+		if parent == d || ceilings[parent] {
+			return false
+		}
+		d = parent
+	}
 }
 
 // Branch returns the current branch name of repo.

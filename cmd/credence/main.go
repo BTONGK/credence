@@ -47,7 +47,7 @@ func init() {
 		{"ledger", "[--by agent|repo|harness|model] [--entries] [--verify [file]] [--json]", "reputation, calibration and the signed ledger", cmdLedger, false},
 		{"export", "--format json|csv [--out file] [--share-person]", "export the signed ledger", cmdExport, false},
 		{"ui", "[--no-open]", "open the local web UI", cmdUI, false},
-		{"demo", "[--dir path] [--port n] [--no-open]", "build the flaky-scheduler example and open it", cmdDemo, false},
+		{"demo", "[--dir path] [--port n] [--no-open]", "open an example report: a bakery website update", cmdDemo, false},
 		{"backfill", "[--since 30d] [--harness h]", "capture older transcripts", cmdBackfill, false},
 		{"config", "[show | get key | set key value]", "view or change ~/.credence/config.yaml", cmdConfig, false},
 		{"contributors", "[--since 30d] [--format md|json] [--release name]", "credits for CONTRIBUTORS or release notes", cmdContributors, false},

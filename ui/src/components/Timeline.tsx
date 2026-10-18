@@ -11,7 +11,7 @@ interface Span {
 }
 
 const ICON: Record<string, string> = {
-  prompt: '›', message: '“', read: '▤', search: '⌕', test: '▶', command: '$', edit: '✎', subagent: '⑂', commit: '◆', claim: '✦',
+  prompt: '›', message: '“', read: '▤', search: '⌕', tool: '⚙', test: '▶', command: '$', edit: '✎', subagent: '⑂', commit: '◆', claim: '✦',
 }
 
 export function Timeline({ report, highlight, onOpen }: {

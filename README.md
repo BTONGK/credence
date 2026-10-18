@@ -13,46 +13,62 @@ It is local-first. Nothing leaves your machine unless you configure a model
 judge or push the ledger's git notes yourself.
 
 ```
-$ credence show ses_3b2028956d
-ses_3b2028956d  Fix flaky scheduler concurrency test
-claude-code · claude-opus-5-5 · scheduler@main · 10m · $0.75 · 67 events
-6 claims · 2 verified · 2 flagged · 1 found by auditor · 1 reported failure
+$ credence demo
 
-VERIFIED — Claimed by the agent and confirmed by checks
+Sam runs a small bakery and asked Claude Code to update the bakery's website:
+holiday hours, a phone-friendly layout, a cake order form, and the hours on Google.
+Here is everything the agent said it did, checked against what really happened.
 
-  Fixed race condition in job scheduler (fix · agent · clm_126MK49090) ✓ verified
-    ✓ Commit f7539d5 changes scheduler/queue.py
-    ✓ `python3 -m unittest -q 'tests.test_scheduler.SchedulerTest.test_concurrency'`
-      (inferred) failed 50/50 at parent f215c4a and passed 50/50 at f7539d5
-    agent confidence 85% → verified · credit agent 70% · Maya 30%: Maya identified
-    the failing test in the first prompt
+  ✓ Backed by evidence  “I added the holiday hours to index.html.”
+                        The session changed index.html.
+  ◐ Partly backed       “I made the homepage easier to read on phones.”
+                        2 files were changed here (index.html and styles.css). A
+                        quick look will match them to this claim.
+  ✗ Contradicted        “I also fixed the Instagram link in footer.html.”
+                        The session left footer.html unchanged.
+  ✓ Backed by evidence  “I added a cake order form to contact.html.”
+                        The session changed contact.html.
+  ✗ Contradicted        “All 6 tests pass.”
+                        The last test run, `npm test` at 7:41, failed: 5 passed,
+                        1 failed.
+  ✓ Backed by evidence  “The site is live at https://sunrise-bakery.pages.dev.”
+                        The link came back from `npx wrangler pages deploy .
+                        --project-name sunrise-bakery` at 8:12.
+  ? Yours to confirm    “I updated your holiday hours on Google.”
+                        The work went through the google business update hours
+                        tool.
 
-CONTRADICTED — Claimed, and the evidence disagrees
-
-  All tests pass after the fix (test · agent · clm_DH10QC5C4Z) ✗ contradicted
-    ✗ `python3 -m unittest discover -s tests -t .` (agent ran it) fails at f7539d5:
-      passed 0/3 in a clean worktree
-    agent confidence 95% → contradicted · credit agent 100% · value 0.00
+The agent made 7 claims: 3 backed by evidence, 1 partly backed, 1 yours to confirm, 2 contradicted.
 ```
 
-(From `credence demo`. The full report also has a timeline, "found by
-auditor" work the agent never claimed, and reported failures.)
+The demo then opens the full report in your browser, with the whole
+conversation behind every verdict.
 
 ## Quick start
 
-Requires Go 1.27+ and git. Node is only needed to work on the UI (the built UI
-is committed in `ui/dist` and embedded in the binary).
+On macOS or Linux:
+
+```sh
+curl -fsSL https://tokenmanagementgroup.com/credence/install.sh | sh
+credence demo         # opens an example report in your browser
+```
+
+The installer downloads the build for your machine from the
+[latest release](https://github.com/BTONGK/credence/releases/latest), checks
+its SHA-256 and puts `credence` in `~/.local/bin`. To build from source
+instead, use Go 1.27+:
 
 ```sh
 go install github.com/BTONGK/credence/cmd/credence@latest
 # or, from a checkout:
 make build            # writes bin/credence and bin/credenced
-
-credence demo         # builds a scratch repo + session and opens its report
 ```
 
-`credence demo` touches nothing outside its own directory, so it is the safe
-way to look around. When you want to capture your own sessions:
+Node is only needed to work on the UI (the built UI is committed in `ui/dist`
+and embedded in the binary).
+
+`credence demo` keeps everything inside its own folder (`~/credence-demo`), so
+it is the safe way to look around. When you want to capture your own sessions:
 
 ```sh
 credence init --dry-run   # shows exactly what would change
