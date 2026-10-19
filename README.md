@@ -50,13 +50,46 @@ On macOS or Linux:
 
 ```sh
 curl -fsSL https://tokenmanagementgroup.com/credence/install.sh | sh
-credence demo         # opens an example report in your browser
 ```
 
 The installer downloads the build for your machine from the
 [latest release](https://github.com/BTONGK/credence/releases/latest), checks
-its SHA-256 and puts `credence` in `~/.local/bin`. To build from source
-instead, use Go 1.27+:
+its SHA-256, puts `credence` in `~/.local/bin`, and then asks two questions:
+
+```
+Connect Credence to Claude Code? [Y/n]
+Check your sessions from the last 7 days now? [Y/n]
+```
+
+Press Enter for both and your reports open in the browser. From then on:
+
+- **In Claude Code**, a reply that makes claims gets a one-line note under it:
+  `Credence: 2 claims in this reply: 1 backed by evidence, 1 contradicted. ✗ “All 6 tests pass.” The last test run, npm test at 7:41, failed: 5 passed, 1 failed. Type /credence for every claim.`
+  (`credence config set notify.replies off` turns the note off.)
+- **`/credence`** in Claude Code lists every claim in the session with its
+  verdict and reason. Claude also runs it when you ask "is that really done?"
+- **`credence`** in a terminal opens your reports. The first time, it runs the
+  setup.
+- **`credence demo`** opens the example above. It keeps everything inside its
+  own folder (`~/credence-demo`).
+
+Setup edits your harness settings (marked `# credence-managed`, with a backup),
+adds the `/credence` skill to `~/.claude/skills`, registers the
+`credence_claim` MCP tool, installs a user service that runs the daemon, and
+finishes with a self-check. `credence uninstall` reverses all of it. To see
+every change first, or to set up step by step:
+
+```sh
+credence init --dry-run   # shows exactly what would change
+credence init             # capture hooks, /credence skill, MCP tool, background daemon
+credence doctor           # check capture, daemon, keys, ledger and model setup
+```
+
+Installer settings: `CREDENCE_NO_SETUP=1` installs only, `CREDENCE_SETUP=1`
+answers yes to both questions, and `CREDENCE_VERSION=v0.9.3` pins a release
+(see the top of [`scripts/install.sh`](scripts/install.sh)).
+
+To build from source instead, use Go 1.27+, then run `credence` to set up:
 
 ```sh
 go install github.com/BTONGK/credence/cmd/credence@latest
@@ -66,20 +99,6 @@ make build            # writes bin/credence and bin/credenced
 
 Node is only needed to work on the UI (the built UI is committed in `ui/dist`
 and embedded in the binary).
-
-`credence demo` keeps everything inside its own folder (`~/credence-demo`), so
-it is the safe way to look around. When you want to capture your own sessions:
-
-```sh
-credence init --dry-run   # shows exactly what would change
-credence init             # capture hooks + credence_claim MCP tool + background daemon
-credence ui               # open the local UI
-credence doctor           # check capture, daemon, keys, ledger and model setup
-```
-
-`init` edits your harness settings (marked `# credence-managed`, with a
-backup) and installs a user service that runs the daemon. `credence uninstall`
-reverses it.
 
 ## How it works
 
@@ -129,7 +148,10 @@ reverses it.
 
 | Command | What it does |
 |---|---|
-| `credence init` / `uninstall` | install or remove hooks, the MCP tool and the service |
+| `credence` | set up the first time; after that, open the reports in the browser |
+| `credence setup [--yes] [--since 7d]` | guided setup: connect your agents, check recent sessions, open the reports |
+| `credence check [--session id]` | check a session's claims right now (what `/credence` runs) |
+| `credence init` / `uninstall` | install or remove hooks, the `/credence` skill, the MCP tool and the service |
 | `credence sessions [--needs-review]` | list captured sessions |
 | `credence show <session\|claim>` | a session's credit report or one claim card |
 | `credence review [session]` | keyboard review in the terminal |
@@ -300,7 +322,15 @@ make check   # gofmt, go vet, go test, UI typecheck
 make ui      # rebuild ui/dist (commit it: the Go build embeds it)
 make dev     # Vite dev server with hot reload against a daemon on :7171
 make demo    # build and open the demo in ./demo-home
+make fresh-test  # install the way a new user does, in a throwaway home
+make dist    # release archives and checksums.txt in ./dist
 ```
+
+Before every release, `scripts/fresh-install-test.sh` builds this checkout,
+runs the one-line installer and guided setup with `HOME` set to a temporary
+folder, and checks each step a new user sees: the two questions, the hooks and
+skill, the first check, the reply note, `/credence`, `doctor`, an upgrade and
+`uninstall`. Your own `~/.claude`, `~/.credence` and services stay as they are.
 
 The packages:
 

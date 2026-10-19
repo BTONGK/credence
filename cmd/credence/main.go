@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -21,6 +22,7 @@ import (
 	_ "github.com/BTONGK/credence/adapters/cursor"
 	_ "github.com/BTONGK/credence/adapters/generic"
 	"github.com/BTONGK/credence/capture"
+	"github.com/BTONGK/credence/internal/home"
 	"github.com/BTONGK/credence/mcp"
 	"github.com/BTONGK/credence/spec"
 )
@@ -37,7 +39,9 @@ var commands []command
 
 func init() {
 	commands = []command{
+		{"setup", "[--yes] [--since 7d] [--no-service] [--no-open]", "guided setup: connect your agents, check recent sessions, open the reports", cmdSetup, false},
 		{"init", "[--scope user|project|local] [--harness h,...] [--no-mcp] [--no-service] [--dry-run] [--yes]", "install capture hooks and the credence_claim MCP tool", cmdInit, false},
+		{"check", "[--harness h] [--session id] [--cwd dir] [--json]", "check a session's claims right now (what /credence runs)", cmdCheck, false},
 		{"doctor", "[--json]", "check capture, daemon, keys, ledger and model setup", cmdDoctor, false},
 		{"sessions", "[--needs-review] [--repo r] [--harness h] [--limit n] [--json]", "list captured sessions, newest first", cmdSessions, false},
 		{"show", "<session|claim> [--events] [--json]", "show a session's credit report or one claim card", cmdShow, false},
@@ -67,18 +71,31 @@ func init() {
 
 func main() {
 	if len(os.Args) < 2 {
-		usage(os.Stdout)
-		return
+		// On its own, credence sets itself up the first time and opens the
+		// reports after that.
+		switch _, err := os.Stat(home.Config()); {
+		case err == nil:
+			fmt.Println(dim("Opening your reports. `credence help` lists every command."))
+			os.Args = append(os.Args, "ui")
+		case isTTY(os.Stdin) && isTTY(os.Stdout):
+			os.Args = append(os.Args, "setup")
+		default:
+			usage(os.Stdout)
+			return
+		}
 	}
 	name := os.Args[1]
 	if name == "hook" {
-		// The capture path: no network, no database, always exit 0.
+		// The capture path: no database, always exit 0. After a Claude Code
+		// reply it asks the local daemon for the one-line check.
 		h := ""
 		if len(os.Args) > 2 {
 			h = os.Args[2]
 		}
-		_ = capture.Hook(h, os.Stdin, time.Now())
+		in, _ := io.ReadAll(io.LimitReader(os.Stdin, capture.MaxStdin))
+		_ = capture.Hook(h, bytes.NewReader(in), time.Now())
 		autostart()
+		replyNote(h, in)
 		os.Exit(0)
 	}
 	if name == "mcp" {
@@ -124,7 +141,7 @@ func usage(w io.Writer) {
 		}
 		fmt.Fprintf(w, "  credence %-13s %s\n", c.name, c.summary)
 	}
-	fmt.Fprintln(w, "\nRun `credence <command> -h` for flags. Data lives in ~/.credence (override with CREDENCE_HOME).")
+	fmt.Fprintln(w, "\nRun `credence` alone to set up or open your reports, and `credence <command> -h` for flags.\nData lives in ~/.credence (override with CREDENCE_HOME).")
 }
 
 func newFlags(name, args string) *flag.FlagSet {

@@ -320,7 +320,7 @@ export interface Status {
   started_at: string
   jobs: Record<string, number>
   job_errors: { kind: string; key: string; error: string }[] | null
-  hooks_24h: Record<string, number>
+  hooks_24h: Record<string, Record<string, number>> | null
   month_spend_usd: number
   budget_usd: number
   auditor: string

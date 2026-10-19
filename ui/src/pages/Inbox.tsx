@@ -150,16 +150,43 @@ function Row({ s, index, selected, onHover }: { s: SessionItem; index: number; s
   )
 }
 
+const HARNESS_NAMES: Record<string, string> = { 'claude-code': 'Claude Code', codex: 'Codex', cursor: 'Cursor' }
+
 function EmptyInbox({ filtered }: { filtered: boolean }) {
+  const { data: status } = useAsync(() => api.status(), [])
   if (filtered) return <div className="empty">Try a different search.</div>
+  const heard = Object.entries(status?.hooks_24h ?? {})
+    .filter(([, events]) => Object.values(events ?? {}).reduce((a, b) => a + b, 0) > 0)
+    .map(([h]) => HARNESS_NAMES[h] ?? h)
+  const working = (status?.jobs?.pending ?? 0) + (status?.jobs?.running ?? 0)
   return (
     <div className="empty empty-big">
-      <h2>Your sessions will appear here</h2>
-      <p>
-        Credence reads your Claude Code and Codex sessions as they happen. Run <code>credence init</code> to start, or{' '}
-        <code>credence demo</code> to see an example.
+      {working > 0 ? (
+        <>
+          <h2>Checking your sessions</h2>
+          <p>Credence is reading {plural(working, 'session')} now. Reports appear here as each one finishes.</p>
+        </>
+      ) : heard.length > 0 ? (
+        <>
+          <h2>Capture is working</h2>
+          <p>
+            Credence heard from {heard.join(' and ')} in the last day. Each session&rsquo;s report appears here a few minutes
+            after the session goes quiet.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2>Your sessions will appear here</h2>
+          <p>
+            Use Claude Code or Codex as usual. Each session&rsquo;s report appears here a few minutes after the session goes
+            quiet.
+          </p>
+        </>
+      )}
+      <p className="muted">
+        To check older sessions, run <code>credence backfill --since 7d</code>. To confirm capture is set up, run{' '}
+        <code>credence doctor</code>. To see an example report, run <code>credence demo</code>.
       </p>
-      <p className="muted">Older sessions can be added with <code>credence backfill --since 30d</code>.</p>
     </div>
   )
 }

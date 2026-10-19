@@ -48,6 +48,7 @@ type Engine struct {
 	Notify func(sessionID string)
 
 	mu        sync.Mutex
+	spoolMu   sync.Mutex // one reader of the spool at a time
 	files     map[string]*fileState
 	redactors map[string]*redact.Redactor
 	sessions  map[string]*sessCtx
@@ -890,6 +891,8 @@ func (e *Engine) Backfill(ctx context.Context, since time.Time, harness string) 
 
 // ConsumeSpool reads new hook records from every spool file.
 func (e *Engine) ConsumeSpool(ctx context.Context) {
+	e.spoolMu.Lock()
+	defer e.spoolMu.Unlock()
 	files, _ := filepath.Glob(filepath.Join(home.Spool(), "*.jsonl"))
 	for _, path := range files {
 		off := e.Store.SpoolOffset(path)

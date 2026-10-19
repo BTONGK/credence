@@ -18,7 +18,7 @@ const (
 	LedgerSpec  = "credence.ledger/0.9"
 	EventSpec   = "credence.event/0.9"
 	PolicySpec  = 1
-	Version     = "0.9.2"
+	Version     = "0.9.3"
 )
 
 // Claim types.

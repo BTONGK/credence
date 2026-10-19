@@ -29,6 +29,13 @@ type Capture struct {
 	ExtraRoots []string `yaml:"extra_roots"`
 }
 
+// Notify controls what Credence shows inside the agent's own window.
+type Notify struct {
+	// Replies shows a one-line check after each Claude Code reply that
+	// makes claims. Unset means on.
+	Replies *bool `yaml:"replies"`
+}
+
 // Budget caps model spend.
 type Budget struct {
 	MonthlyUSD       float64 `yaml:"monthly_usd"`
@@ -52,8 +59,12 @@ type Config struct {
 	// config can register them; a repository's credence.yaml cannot.
 	Plugins []Plugin `yaml:"plugins"`
 	// Autostart lets the capture hook start the daemon if it is not running.
-	Autostart *bool `yaml:"autostart"`
+	Autostart *bool  `yaml:"autostart"`
+	Notify    Notify `yaml:"notify"`
 }
+
+// ReplyNotes reports whether the per-reply note is on.
+func (c *Config) ReplyNotes() bool { return c.Notify.Replies == nil || *c.Notify.Replies }
 
 // Plugin registers an external verifier.
 type Plugin struct {
@@ -157,6 +168,9 @@ func (c *Config) Set(key, value string) bool {
 		c.Capture.IdleSeconds = n
 	case "person_views":
 		c.PersonViews = value == "true" || value == "1" || value == "yes"
+	case "notify.replies":
+		on := value == "true" || value == "1" || value == "yes" || value == "on"
+		c.Notify.Replies = &on
 	default:
 		return false
 	}

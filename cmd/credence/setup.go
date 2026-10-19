@@ -35,6 +35,18 @@ func sortedAdapters() []adapters.Adapter {
 	return as
 }
 
+// initOptions are the choices behind `credence init` and `credence setup`.
+type initOptions struct {
+	scope     adapters.Scope
+	repo      string
+	targets   []adapters.Adapter
+	noMCP     bool
+	noService bool
+	dry       bool
+	policy    bool
+	guided    bool // called from setup, which prints its own next steps
+}
+
 func cmdInit(ctx context.Context, args []string) error {
 	fs := newFlags("init", "[--scope user|project|local] [--harness h,...] [--no-mcp] [--no-service] [--dry-run] [--yes]")
 	scope := fs.String("scope", "user", "where to install hooks: user (all repos), project (committed .claude/settings.json), local (this checkout only)")
@@ -48,66 +60,84 @@ func cmdInit(ctx context.Context, args []string) error {
 		return err
 	}
 	cwd, _ := os.Getwd()
-	repo := gitx.Root(cwd)
-	sc := adapters.Scope(*scope)
-	if sc != adapters.ScopeUser && repo == "" {
+	o := initOptions{scope: adapters.Scope(*scope), repo: gitx.Root(cwd), noMCP: *noMCP, noService: *noService, dry: *dry, policy: *withPolicy}
+	if o.scope != adapters.ScopeUser && o.repo == "" {
 		return errors.New("--scope project/local must be run inside a git repository")
 	}
+	fmt.Println(bold("Credence setup"))
+	o.targets = detectTargets(*harness, true)
+	if len(o.targets) == 0 {
+		return errors.New("no supported harness found (Claude Code, Codex or Cursor); use --harness to force one")
+	}
+	fmt.Println()
+	fmt.Println("This will:")
+	for _, a := range o.targets {
+		where := "your user settings"
+		if o.scope != adapters.ScopeUser {
+			where = string(o.scope) + " settings in " + o.repo
+		}
+		fmt.Printf("  • add capture hooks for %s to %s (marked `# credence-managed`, a backup is kept)\n", a.Name(), where)
+		if a.Name() == "claude-code" && o.scope == adapters.ScopeUser {
+			fmt.Println("  • add the /credence skill to Claude Code, so you can ask Claude for a check anytime")
+		}
+		if !o.noMCP {
+			fmt.Printf("  • register the credence_claim MCP tool with %s\n", a.Name())
+		}
+	}
+	if !o.noService {
+		fmt.Printf("  • install a background service (%s) that runs `credence daemon`\n", serviceKind())
+	}
+	fmt.Printf("  • keep all data local in %s; no model calls unless you configure an auditor or judge\n", home.Dir())
+	if o.dry {
+		fmt.Println()
+	} else if !*yes && !confirm("\nProceed?") {
+		return errors.New("cancelled")
+	}
+	return runInit(ctx, o)
+}
+
+// detectTargets lists the harnesses on this machine and returns the ones
+// to connect: the named ones, or every one found.
+func detectTargets(harness string, show bool) []adapters.Adapter {
 	want := map[string]bool{}
-	for _, h := range strings.Split(*harness, ",") {
+	for _, h := range strings.Split(harness, ",") {
 		if h = strings.TrimSpace(h); h != "" {
 			want[h] = true
 		}
 	}
 	var targets []adapters.Adapter
-	fmt.Println(bold("Credence setup"))
 	for _, a := range sortedAdapters() {
 		if a.Name() == "generic" {
 			continue
 		}
 		det := a.Detect()
-		status := dim("not found")
-		if det.Installed {
-			status = green("found") + " " + dim(det.Version)
+		if show {
+			status := dim("not found")
+			if det.Installed {
+				status = green("found") + " " + dim(det.Version)
+			}
+			fmt.Printf("  %-12s %s\n", a.Name(), status)
 		}
-		fmt.Printf("  %-12s %s\n", a.Name(), status)
 		if (len(want) == 0 && det.Installed) || want[a.Name()] {
 			targets = append(targets, a)
 		}
 	}
-	if len(targets) == 0 {
-		return errors.New("no supported harness found (Claude Code, Codex or Cursor); use --harness to force one")
-	}
-	fmt.Println()
-	fmt.Println("This will:")
-	for _, a := range targets {
-		where := "your user settings"
-		if sc != adapters.ScopeUser {
-			where = string(sc) + " settings in " + repo
-		}
-		fmt.Printf("  • add capture hooks for %s to %s (marked `# credence-managed`, a backup is kept)\n", a.Name(), where)
-		if !*noMCP {
-			fmt.Printf("  • register the credence_claim MCP tool with %s\n", a.Name())
-		}
-	}
-	if !*noService {
-		fmt.Printf("  • install a background service (%s) that runs `credence daemon`\n", serviceKind())
-	}
-	fmt.Printf("  • keep all data local in %s; no model calls unless you configure an auditor or judge\n", home.Dir())
-	if *dry {
-		fmt.Println()
-	} else if !*yes && !confirm("\nProceed?") {
-		return errors.New("cancelled")
-	}
+	return targets
+}
+
+// runInit connects the chosen harnesses, writes the config and starts the
+// daemon, then checks the result.
+func runInit(ctx context.Context, o initOptions) error {
+	sc, repo := o.scope, o.repo
 	bin := exe()
-	for _, a := range targets {
-		rep, err := a.Install(adapters.InstallOptions{Scope: sc, Repo: repo, Binary: bin, WithMCP: !*noMCP, DryRun: *dry})
+	for _, a := range o.targets {
+		rep, err := a.Install(adapters.InstallOptions{Scope: sc, Repo: repo, Binary: bin, WithMCP: !o.noMCP, DryRun: o.dry})
 		if err != nil {
 			fmt.Printf("  %s %s: %v\n", red("✗"), a.Name(), err)
 			continue
 		}
 		for _, act := range rep.Actions {
-			if *dry {
+			if o.dry {
 				fmt.Printf("  %s %s\n", dim("→"), wouldDo(act))
 				continue
 			}
@@ -117,12 +147,18 @@ func cmdInit(ctx context.Context, args []string) error {
 			fmt.Printf("  %s %s\n", yellow("!"), w)
 		}
 	}
-	if *dry {
+	if o.dry {
 		fmt.Println(dim("\nDry run: everything above is a preview. Run `credence init` to apply it."))
 		return nil
 	}
 	cfg := config.Load()
-	if _, err := os.Stat(home.Config()); os.IsNotExist(err) {
+	_, statErr := os.Stat(home.Config())
+	if os.IsNotExist(statErr) {
+		// A daemon started before setup runs without the config; restart it
+		// so it picks up the capture settings written here.
+		if i, err := server.ReadInfo(); err == nil {
+			stopDaemon(i)
+		}
 		if cfg.Human == "" && repo != "" {
 			if n := gitx.UserName(repo); n != "" {
 				cfg.Human = strings.ToLower(strings.Fields(n)[0])
@@ -136,7 +172,7 @@ func cmdInit(ctx context.Context, args []string) error {
 	if _, err := keys.Load(); err == nil {
 		fmt.Printf("  %s ledger signing key in %s\n", green("✓"), home.Keys())
 	}
-	if *withPolicy && repo != "" {
+	if o.policy && repo != "" {
 		p := filepath.Join(repo, policy.FileName)
 		if _, err := os.Stat(p); os.IsNotExist(err) {
 			if err := os.WriteFile(p, []byte(policy.Example), 0o644); err == nil {
@@ -144,11 +180,12 @@ func cmdInit(ctx context.Context, args []string) error {
 			}
 		}
 	}
-	if !*noService {
+	if !o.noService {
 		if err := installService(bin); err != nil {
 			fmt.Printf("  %s service: %v (run `credence start` instead)\n", yellow("!"), err)
 		} else {
 			fmt.Printf("  %s background service installed\n", green("✓"))
+			waitForDaemon(5 * time.Second)
 		}
 	}
 	if _, err := startBackground(); err != nil {
@@ -156,8 +193,41 @@ func cmdInit(ctx context.Context, args []string) error {
 	} else {
 		fmt.Printf("  %s daemon running\n", green("✓"))
 	}
-	fmt.Println("\nNext: use your agent as usual, then run `credence ui` to read the reports. Try `credence demo` to see a full example.")
+	selfCheck(ctx)
+	if !o.guided {
+		fmt.Println("\nNext: use your agent as usual. In Claude Code, type /credence to check the session; in a terminal, type `credence` to open your reports. `credence demo` shows a full example.")
+	}
 	return nil
+}
+
+// waitForDaemon gives a freshly loaded service a moment to answer.
+func waitForDaemon(limit time.Duration) {
+	for end := time.Now().Add(limit); time.Now().Before(end); time.Sleep(200 * time.Millisecond) {
+		if i, err := server.ReadInfo(); err == nil && i.Ping() == nil {
+			return
+		}
+	}
+}
+
+// selfCheck runs the doctor quietly and shows only what needs a fix.
+func selfCheck(ctx context.Context) {
+	var bad []check
+	for _, c := range doctorChecks(ctx) {
+		if !c.OK {
+			bad = append(bad, c)
+		}
+	}
+	if len(bad) == 0 {
+		fmt.Printf("  %s self-check passed: capture, daemon, database and ledger all work\n", green("✓"))
+		return
+	}
+	for _, c := range bad {
+		fmt.Printf("  %s %s: %s\n", red("✗"), c.Name, c.Detail)
+		if c.Fix != "" {
+			fmt.Printf("    %s %s\n", dim("fix:"), c.Fix)
+		}
+	}
+	fmt.Println(dim("  Run `credence doctor` after the fix to confirm."))
 }
 
 func serviceKind() string {
@@ -293,6 +363,34 @@ func cmdDoctor(ctx context.Context, args []string) error {
 	if _, err := parse(fs, args); err != nil {
 		return err
 	}
+	cs := doctorChecks(ctx)
+	if *asJSON {
+		return printJSON(cs)
+	}
+	bad := 0
+	for _, c := range cs {
+		mark := green("✓")
+		switch {
+		case !c.OK:
+			mark = red("✗")
+			bad++
+		case c.Warn:
+			mark = yellow("!")
+		}
+		fmt.Printf("%s %-32s %s\n", mark, c.Name, dim(c.Detail))
+		if (!c.OK || c.Warn) && c.Fix != "" {
+			fmt.Printf("  %s %s\n", dim("fix:"), c.Fix)
+		}
+	}
+	if bad > 0 {
+		return fmt.Errorf("%d checks failed", bad)
+	}
+	fmt.Println("\nEverything works. Type `credence` to open your reports.")
+	return nil
+}
+
+// doctorChecks checks capture, the daemon, the database and the ledger.
+func doctorChecks(ctx context.Context) []check {
 	var cs []check
 	add := func(name string, ok bool, detail, fix string) {
 		cs = append(cs, check{Name: name, OK: ok, Detail: detail, Fix: fix})
@@ -333,6 +431,10 @@ func cmdDoctor(ctx context.Context, args []string) error {
 				continue
 			}
 			for _, h := range a.Doctor(adapters.InstallOptions{Scope: adapters.ScopeUser, Binary: exe(), WithMCP: true}) {
+				if h.Optional && !h.OK {
+					warn(a.Name()+": "+h.Check, h.Detail, h.Fix)
+					continue
+				}
 				add(a.Name()+": "+h.Check, h.OK, h.Detail, h.Fix)
 			}
 			n := 0
@@ -368,34 +470,13 @@ func cmdDoctor(ctx context.Context, args []string) error {
 		}
 	}
 	if i, err := server.ReadInfo(); err != nil {
-		add("daemon", false, err.Error(), "credence start (or `credence init` to install the service)")
+		add("daemon", false, err.Error(), "credence start (or `credence setup` to install the service)")
 	} else if err := i.Ping(); err != nil {
 		add("daemon", false, err.Error(), "credence stop && credence start")
 	} else {
 		add("daemon", true, fmt.Sprintf("pid %d on %s", i.PID, i.URL()), "")
 	}
-	if *asJSON {
-		return printJSON(cs)
-	}
-	bad := 0
-	for _, c := range cs {
-		mark := green("✓")
-		switch {
-		case !c.OK:
-			mark = red("✗")
-			bad++
-		case c.Warn:
-			mark = yellow("!")
-		}
-		fmt.Printf("%s %-32s %s\n", mark, c.Name, dim(c.Detail))
-		if (!c.OK || c.Warn) && c.Fix != "" {
-			fmt.Printf("  %s %s\n", dim("fix:"), c.Fix)
-		}
-	}
-	if bad > 0 {
-		return fmt.Errorf("%d checks failed", bad)
-	}
-	return nil
+	return cs
 }
 
 func cmdConfig(ctx context.Context, args []string) error {
@@ -453,30 +534,25 @@ func cmdBackfill(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := open()
-	if err != nil {
-		return err
-	}
-	defer d.Close()
-	n, err := d.Ingest.Backfill(ctx, time.Now().Add(-dd), *harness)
-	if err != nil {
-		return err
-	}
-	// Old sessions are already over: close them and queue final reports.
-	rows, _ := d.Store.ListSessions(store.SessionFilter{})
-	queued := 0
-	closeAfter := time.Duration(d.Cfg.Capture.CloseMinutes) * time.Minute
-	for _, r := range rows {
-		if r.ReportState != "" || r.EventCount == 0 || r.Skipped || time.Since(r.LastActivity) < closeAfter {
-			continue
+	// The running daemon does the work when there is one, so a single
+	// process writes the store.
+	var res *server.BackfillResult
+	if i, err := server.ReadInfo(); err == nil && i.Ping() == nil {
+		res = &server.BackfillResult{}
+		if err := i.Post(ctx, "/api/backfill", map[string]string{"since": *since, "harness": *harness}, res); err != nil {
+			return err
 		}
-		end := r.LastActivity
-		_ = d.Store.SetSessionState(r.ID, "closed", &end)
-		if ok, _ := d.Store.Enqueue("report", r.ID+":final:backfill", r.ID, "", time.Now()); ok {
-			queued++
+	} else {
+		d, err := open()
+		if err != nil {
+			return err
+		}
+		defer d.Close()
+		if res, err = d.Backfill(ctx, time.Now().Add(-dd), *harness); err != nil {
+			return err
 		}
 	}
-	fmt.Printf("captured %d transcripts from the last %s; queued %d reports for the daemon\n", n, *since, queued)
+	fmt.Printf("captured %d transcripts from the last %s; queued %s for the daemon\n", res.Transcripts, *since, plural(res.Queued, "report"))
 	return nil
 }
 

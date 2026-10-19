@@ -54,6 +54,8 @@ type Health struct {
 	OK     bool   `json:"ok"`
 	Detail string `json:"detail"`
 	Fix    string `json:"fix,omitempty"`
+	// Optional checks cover extras; a miss is a note, not a failure.
+	Optional bool `json:"optional,omitempty"`
 }
 
 // Boundaries declares how a harness signals session start and end.

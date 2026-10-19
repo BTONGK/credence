@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,13 +23,14 @@ func open() (*server.Daemon, error) {
 }
 
 func cmdDaemon(ctx context.Context, args []string) error {
-	fs := newFlags("daemon", "[--port n]")
+	fs := newFlags("daemon", "[--port n] [--no-scan]")
 	port := fs.Int("port", 0, "listen port (default from config, 7171)")
 	verbose := fs.Bool("v", false, "log to stderr")
+	noScan := fs.Bool("no-scan", false, "serve and report imported sessions only, leaving harness transcripts alone")
 	if _, err := parse(fs, args); err != nil {
 		return err
 	}
-	opts := server.Options{Port: *port}
+	opts := server.Options{Port: *port, NoScan: *noScan}
 	if *verbose {
 		opts.Log = os.Stderr
 	}
@@ -78,6 +80,15 @@ func cmdStop(ctx context.Context, args []string) error {
 		fmt.Println("credenced is not running")
 		return nil
 	}
+	if err := stopDaemon(i); err != nil {
+		return err
+	}
+	fmt.Printf("stopped credenced (pid %d)\n", i.PID)
+	return nil
+}
+
+// stopDaemon asks the daemon to exit and waits up to three seconds.
+func stopDaemon(i *server.Info) error {
 	if err := syscall.Kill(i.PID, syscall.SIGTERM); err != nil {
 		return err
 	}
@@ -87,7 +98,6 @@ func cmdStop(ctx context.Context, args []string) error {
 			break
 		}
 	}
-	fmt.Printf("stopped credenced (pid %d)\n", i.PID)
 	return nil
 }
 
@@ -121,6 +131,9 @@ func autostart() {
 }
 
 func openBrowser(url string) error {
+	if os.Getenv("CREDENCE_NO_OPEN") != "" {
+		return errors.New("CREDENCE_NO_OPEN is set")
+	}
 	switch runtime.GOOS {
 	case "darwin":
 		return exec.Command("open", url).Start()
@@ -141,7 +154,7 @@ func cmdUI(ctx context.Context, args []string) error {
 		return err
 	}
 	url := fmt.Sprintf("%s/#token=%s", i.URL(), i.Token)
-	if *noOpen {
+	if *noOpen || os.Getenv("CREDENCE_NO_OPEN") != "" {
 		fmt.Println(url)
 		return nil
 	}

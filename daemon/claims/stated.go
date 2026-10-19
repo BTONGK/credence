@@ -1,11 +1,13 @@
 package claims
 
 import (
+	"encoding/json"
 	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/BTONGK/credence/adapters"
 	"github.com/BTONGK/credence/spec"
@@ -83,6 +85,59 @@ func ExtractStated(d *Data) []*spec.Claim {
 		}
 	}
 	flush()
+	return out
+}
+
+// ReplyClaims are the claims in one reply, checked against the record as it
+// stands. A Stop hook hands Credence the agent's final words before the
+// transcript file holds them, so a reply the record lacks is placed right
+// after the last recorded event.
+func ReplyClaims(d *Data, text string, at time.Time) []*spec.Claim {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil
+	}
+	var reply *spec.Event
+	last, actor := 0, ""
+	for i := range d.Events {
+		e := &d.Events[i]
+		if e.Seq > last {
+			last = e.Seq
+		}
+		if e.Kind == spec.KindMessage && strings.HasPrefix(e.Actor, "agent:") {
+			actor = e.Actor
+			if strings.TrimSpace(PayloadStr(e, "text")) == text {
+				reply = e
+			}
+		}
+	}
+	if reply == nil {
+		if actor == "" {
+			actor = "agent:" + d.Session.Harness
+		}
+		payload, _ := json.Marshal(map[string]string{"text": text})
+		reply = &spec.Event{SessionID: d.Session.ID, Seq: last + 1, TS: at, Kind: spec.KindMessage, Actor: actor, Payload: payload}
+	}
+	turnStart := 0
+	for i := range d.Events {
+		e := &d.Events[i]
+		if e.Seq >= reply.Seq {
+			break
+		}
+		if e.Kind == spec.KindPrompt && strings.HasPrefix(e.Actor, "human:") && !harnessPromptRe.MatchString(PayloadStr(e, "text")) {
+			turnStart = e.Seq
+		}
+	}
+	var out []*spec.Claim
+	seen := map[string]bool{}
+	for _, st := range Statements(text) {
+		key := strings.ToLower(st.Text)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, statedClaim(d, st, turnStart, reply))
+	}
 	return out
 }
 

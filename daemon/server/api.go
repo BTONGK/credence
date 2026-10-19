@@ -48,6 +48,8 @@ func (d *Daemon) Handler() http.Handler {
 	api.HandleFunc("GET /api/ledger/verify", d.ledgerVerify)
 	api.HandleFunc("GET /api/export", d.export)
 	api.HandleFunc("GET /api/stream", d.stream)
+	api.HandleFunc("POST /api/check", d.check)
+	api.HandleFunc("POST /api/backfill", d.backfill)
 	mux.Handle("/api/", d.guard(api))
 	mux.Handle("POST /v1/logs", d.hostCheck(http.HandlerFunc(d.otlp)))
 	mux.Handle("POST /v1/traces", d.hostCheck(http.HandlerFunc(d.otlp)))

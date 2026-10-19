@@ -123,6 +123,11 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer lk.Close()
+	if _, err := os.Stat(home.Config()); os.IsNotExist(err) {
+		// Before setup there are no capture settings: serve imported
+		// sessions and leave the harness transcripts alone.
+		opts.NoScan = true
+	}
 	d, err := Open(opts)
 	if err != nil {
 		return err
@@ -241,7 +246,8 @@ func (d *Daemon) assemble(ctx context.Context, now time.Time) {
 	}
 }
 
-func (d *Daemon) enqueueReport(s *store.SessionRow, final bool) {
+// enqueueReport queues a report job and reports whether it is new.
+func (d *Daemon) enqueueReport(s *store.SessionRow, final bool) bool {
 	state := "p"
 	if final {
 		state = "final"
@@ -250,9 +256,11 @@ func (d *Daemon) enqueueReport(s *store.SessionRow, final bool) {
 	if len(head) > 19 {
 		head = head[7:19]
 	}
-	if ok, _ := d.Store.Enqueue("report", s.ID+":"+state+":"+head, s.ID, "", time.Now()); ok {
+	ok, _ := d.Store.Enqueue("report", s.ID+":"+state+":"+head, s.ID, "", time.Now())
+	if ok {
 		d.poke()
 	}
+	return ok
 }
 
 // close finalizes a session after an integrity check of its transcript.

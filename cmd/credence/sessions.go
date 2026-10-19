@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -48,7 +49,7 @@ func cmdSessions(ctx context.Context, args []string) error {
 		return printJSON(items)
 	}
 	if len(items) == 0 {
-		fmt.Println("No sessions captured yet. Run `credence init`, then use your agent as usual (or try `credence demo`).")
+		fmt.Println("No sessions captured yet. Run `credence setup`, then use your agent as usual (or try `credence demo`).")
 		return nil
 	}
 	muted := 0
@@ -66,7 +67,7 @@ func cmdSessions(ctx context.Context, args []string) error {
 			review = yellow(fmt.Sprintf(" · %d to review", it.Pending))
 		}
 		fmt.Printf("%s  %s  %s\n", bold(it.ID), trunc(title, 70), dim(ago(it.LastActivity)))
-		fmt.Printf("    %s · %s · %s@%s · %s · $%.2f\n", it.Harness, orDash(it.Model), orDash(it.RepoName), orDash(it.Branch), dur(it.DurationSec), it.CostUSD)
+		fmt.Printf("    %s · %s · %s · %s · $%.2f\n", it.Harness, orDash(it.Model), where(it.RepoName, it.Branch, it.Cwd), dur(it.DurationSec), it.CostUSD)
 		fmt.Printf("    %s%s%s\n", it.Summary, review, stateTag(it.SessionRow))
 	}
 	if muted > 0 {
@@ -178,7 +179,7 @@ func flag2(s string) error { return usageErr(s) }
 func printReport(rep *view.Report) {
 	s := rep.Session
 	fmt.Printf("%s  %s\n", bold(s.ID), bold(orDash(s.Title)))
-	fmt.Printf("%s · %s · %s@%s · %s · %s · $%.2f · %d events\n", s.Harness, orDash(s.Model), orDash(s.RepoName), orDash(s.Branch),
+	fmt.Printf("%s · %s · %s · %s · %s · $%.2f · %d events\n", s.Harness, orDash(s.Model), where(s.RepoName, s.Branch, s.Cwd),
 		s.StartedAt.Local().Format("Jan 2 15:04"), dur(s.DurationSec), s.CostUSD, s.EventCount)
 	fmt.Println(s.Summary + stateTag(s.SessionRow))
 	if len(s.Flags) > 0 {
@@ -380,3 +381,14 @@ func cmdVerify(ctx context.Context, args []string) error {
 }
 
 var errNoTTY = errors.New("interactive review needs a terminal; use `credence review <claim> --accept` etc.")
+
+// where names a session's place: repo@branch, or the folder outside a repo.
+func where(repo, branch, cwd string) string {
+	if repo == "" {
+		if cwd == "" {
+			return "-"
+		}
+		return filepath.Base(cwd)
+	}
+	return repo + "@" + orDash(branch)
+}

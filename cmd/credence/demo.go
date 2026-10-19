@@ -17,11 +17,12 @@ import (
 )
 
 func cmdDemo(ctx context.Context, args []string) error {
-	fs := newFlags("demo", "[--dir path] [--port n] [--no-open] [--no-serve]")
+	fs := newFlags("demo", "[--dir path] [--port n] [--no-open] [--no-serve] [--ended 3m]")
 	dir := fs.String("dir", filepath.Join(home.UserHome(), "credence-demo"), "where to create the example website and its separate Credence home")
 	port := fs.Int("port", 7172, "UI port for the demo")
 	noOpen := fs.Bool("no-open", false, "print the report link and leave the browser closed")
 	noServe := fs.Bool("no-serve", false, "build the demo and exit")
+	ended := fs.Duration("ended", 3*time.Minute, "how long ago the example session ended")
 	if _, err := parse(fs, args); err != nil {
 		return err
 	}
@@ -43,7 +44,7 @@ func cmdDemo(ctx context.Context, args []string) error {
 	// The example website stands alone, even inside another repository.
 	os.Setenv("GIT_CEILING_DIRECTORIES", abs)
 
-	sc, err := demo.Build(ctx, abs, time.Now().Add(-3*time.Minute))
+	sc, err := demo.Build(ctx, abs, time.Now().Add(-*ended))
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func cmdDemo(ctx context.Context, args []string) error {
 		}
 		fmt.Println("It shows every claim with its verdict, plus the whole conversation behind it.")
 		fmt.Println()
-		fmt.Println("Ready for your own sessions? Preview the setup with " + bold("credence init --dry-run") + ", then run " + bold("credence init") + ".")
+		fmt.Println("Ready for your own sessions? Run " + bold("credence setup") + ": two questions, then your own reports open.")
 		fmt.Println(dim("Press Ctrl-C to close the demo."))
 	}})
 }
@@ -114,7 +115,7 @@ func clearDemo(dir string) error {
 	return nil
 }
 
-var demoVerdicts = map[string]struct {
+var verdicts = map[string]struct {
 	mark  string
 	label string
 	paint func(string) string
@@ -136,9 +137,9 @@ func printDemo(cards []*view.ClaimCard) {
 	fmt.Println()
 	counts := map[string]int{}
 	for _, c := range cards {
-		v, ok := demoVerdicts[c.Verdict]
+		v, ok := verdicts[c.Verdict]
 		if !ok {
-			v = demoVerdicts[view.VerdictUnchecked]
+			v = verdicts[view.VerdictUnchecked]
 		}
 		counts[c.Verdict]++
 		said := strings.ReplaceAll(c.Claim.Statement, "`", "")
@@ -150,7 +151,7 @@ func printDemo(cards []*view.ClaimCard) {
 	var parts []string
 	for _, k := range []string{view.VerdictBacked, view.VerdictPartly, view.VerdictUnchecked, view.VerdictContradicted} {
 		if counts[k] > 0 {
-			parts = append(parts, fmt.Sprintf("%d %s", counts[k], strings.ToLower(demoVerdicts[k].label)))
+			parts = append(parts, fmt.Sprintf("%d %s", counts[k], strings.ToLower(verdicts[k].label)))
 		}
 	}
 	fmt.Printf("\nThe agent made %d claims: %s.\n", len(cards), strings.Join(parts, ", "))

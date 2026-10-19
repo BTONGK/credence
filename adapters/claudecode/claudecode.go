@@ -85,6 +85,15 @@ func (a Adapter) Install(opts adapters.InstallOptions) (adapters.InstallReport, 
 	}
 	rep.Files = append(rep.Files, path)
 	rep.Actions = append(rep.Actions, fmt.Sprintf("registered %d hooks in %s", len(HookEvents), path))
+	if opts.Scope == adapters.ScopeUser || opts.Scope == "" {
+		act, err := InstallSkill(opts.Binary, opts.DryRun)
+		if err != nil {
+			rep.Warn = append(rep.Warn, "the /credence skill: "+err.Error())
+		} else {
+			rep.Files = append(rep.Files, SkillFile())
+			rep.Actions = append(rep.Actions, act)
+		}
+	}
 	if opts.WithMCP {
 		act, warn := registerMCP(opts)
 		if act != "" {
@@ -237,6 +246,11 @@ func (a Adapter) Uninstall(opts adapters.InstallOptions) (adapters.InstallReport
 	}
 	rep.Files = append(rep.Files, path)
 	rep.Actions = append(rep.Actions, fmt.Sprintf("removed %d hooks from %s", n, path))
+	if (opts.Scope == adapters.ScopeUser || opts.Scope == "") && SkillInstalled() && !opts.DryRun {
+		if os.RemoveAll(filepath.Dir(SkillFile())) == nil {
+			rep.Actions = append(rep.Actions, "removed the /credence skill")
+		}
+	}
 	if opts.WithMCP && opts.Scope == adapters.ScopeUser && !opts.DryRun {
 		if claude, err := exec.LookPath("claude"); err == nil {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -283,10 +297,65 @@ func (a Adapter) Doctor(opts adapters.InstallOptions) []adapters.Health {
 	root := filepath.Join(ConfigDir(), "projects")
 	_, err := os.Stat(root)
 	hs = append(hs, adapters.Health{Check: "claude-code transcripts readable", OK: err == nil, Detail: root})
+	hs = append(hs, adapters.Health{Check: "/credence skill installed", OK: SkillInstalled(), Detail: SkillFile(),
+		Fix: "run `credence setup`"})
 	mcp := mcpRegistered(opts)
 	hs = append(hs, adapters.Health{Check: "credence_claim MCP tool registered", OK: mcp, Detail: "optional: enables self-claims",
-		Fix: "run `credence init --mcp` (auditor-only mode works without it)"})
+		Fix: "run `credence init` with the claude CLI on your PATH (auditor-only mode works without it)", Optional: true})
 	return hs
+}
+
+// skillMarker identifies the skill file Credence wrote.
+const skillMarker = "credence-managed"
+
+// SkillFile is the /credence skill's path.
+func SkillFile() string { return filepath.Join(ConfigDir(), "skills", "credence", "SKILL.md") }
+
+// SkillInstalled reports whether Credence's /credence skill is in place.
+func SkillInstalled() bool {
+	b, err := os.ReadFile(SkillFile())
+	return err == nil && strings.Contains(string(b), skillMarker)
+}
+
+// Skill is the /credence skill. Claude Code runs `credence check` for the
+// current session when the skill loads, and Claude relays the result.
+// Claude can also load it on its own when someone asks whether the work
+// is really done.
+func Skill(bin string) string {
+	cmd := bin
+	if strings.ContainsAny(bin, " '\"$`") {
+		cmd = "'" + strings.ReplaceAll(bin, "'", `'\''`) + "'"
+	}
+	return `---
+name: credence
+description: Check what Claude said it did in this session against the session record. Credence marks each claim as backed by evidence, partly backed, contradicted, or yours to confirm.
+when_to_use: Use when the user types /credence, asks whether the work is really done, asks to check or verify what was claimed, or asks for a Credence report.
+allowed-tools: Bash(` + bin + ` check *)
+---
+<!-- ` + skillMarker + `: written by credence setup; credence uninstall removes it. -->
+
+Credence checked this session's claims against the session record:
+
+!` + "`" + cmd + ` check --harness claude-code --session=${CLAUDE_SESSION_ID}` + "`" + `
+
+Show the user Credence's results above as they are: every claim with its verdict and reason, then the totals line and the line about the full report. Keep Credence's wording. When a claim is contradicted, say so plainly and offer to fix it. When a claim is yours to confirm, tell the user what to look at to confirm it.
+`
+}
+
+// InstallSkill writes the /credence skill; dry describes what it would do.
+func InstallSkill(bin string, dry bool) (string, error) {
+	p := SkillFile()
+	if b, err := os.ReadFile(p); err == nil && !strings.Contains(string(b), skillMarker) {
+		return "", fmt.Errorf("%s belongs to another tool; it stays as it is", p)
+	}
+	act := "installed the /credence skill in " + filepath.Dir(p)
+	if dry {
+		return act, nil
+	}
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		return "", err
+	}
+	return act, os.WriteFile(p, []byte(Skill(bin)), 0o644)
 }
 
 func orNone(s string) string {

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -57,6 +59,56 @@ func (i *Info) Ping() error {
 		return fmt.Errorf("daemon answered %s", resp.Status)
 	}
 	return nil
+}
+
+// Post sends a JSON request to the daemon's API and decodes the answer.
+func (i *Info) Post(ctx context.Context, path string, in, out any) error {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", i.URL()+path, bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+i.Token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		var e struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(resp.Body).Decode(&e) == nil && e.Error != "" {
+			return errors.New(e.Error)
+		}
+		return fmt.Errorf("daemon answered %s", resp.Status)
+	}
+	if out == nil {
+		return nil
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// Get fetches a JSON resource from the daemon's API.
+func (i *Info) Get(ctx context.Context, path string, out any) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", i.URL()+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+i.Token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("daemon answered %s", resp.Status)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
 }
 
 func newToken() string {
