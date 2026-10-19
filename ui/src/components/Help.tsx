@@ -6,6 +6,7 @@ const groups: { title: string; keys: [string, string][] }[] = [
     keys: [
       ['g i', 'Go to sessions'],
       ['g l', 'Go to ledger'],
+      ['g s', 'Go to summary'],
       ['?', 'Show or hide shortcuts'],
       ['Esc', 'Close panel or cancel'],
     ],

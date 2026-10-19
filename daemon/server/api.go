@@ -21,6 +21,7 @@ import (
 	"github.com/BTONGK/credence/daemon/view"
 	"github.com/BTONGK/credence/internal/gitx"
 	"github.com/BTONGK/credence/internal/home"
+	"github.com/BTONGK/credence/policy"
 	"github.com/BTONGK/credence/spec"
 	"github.com/BTONGK/credence/ui"
 )
@@ -48,6 +49,7 @@ func (d *Daemon) Handler() http.Handler {
 	api.HandleFunc("GET /api/ledger/verify", d.ledgerVerify)
 	api.HandleFunc("GET /api/export", d.export)
 	api.HandleFunc("GET /api/stream", d.stream)
+	api.HandleFunc("GET /api/summary", d.summary)
 	api.HandleFunc("POST /api/check", d.check)
 	api.HandleFunc("POST /api/backfill", d.backfill)
 	mux.Handle("/api/", d.guard(api))
@@ -138,6 +140,28 @@ func (d *Daemon) status(w http.ResponseWriter, r *http.Request) {
 		"month_spend_usd": d.Store.MonthSpend(), "budget_usd": d.Cfg.Budget.MonthlyUSD,
 		"auditor": d.Cfg.Auditor.Provider, "judge": d.Cfg.Judge.Provider, "human": d.Cfg.Human, "person_views": d.Cfg.PersonViews,
 	})
+}
+
+// summary sums up the agents' work over a period: ?range=7d, 30d or all.
+func (d *Daemon) summary(w http.ResponseWriter, r *http.Request) {
+	var since time.Time
+	if rg := r.URL.Query().Get("range"); rg != "all" {
+		if rg == "" {
+			rg = "7d"
+		}
+		dd, err := policy.ParseWindow(rg)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, err)
+			return
+		}
+		since = time.Now().Add(-dd)
+	}
+	sum, err := view.Summarize(d.Store, since)
+	if err != nil {
+		writeErr(w, 500, err)
+		return
+	}
+	writeJSON(w, sum)
 }
 
 func (d *Daemon) sessions(w http.ResponseWriter, r *http.Request) {

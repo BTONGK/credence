@@ -7,6 +7,7 @@ import { connectLive, cx, isTyping, navigate, useAsync, useKeys, useLive, useLiv
 import { Inbox } from './pages/Inbox'
 import { Ledger } from './pages/Ledger'
 import { SessionPage } from './pages/Session'
+import { SummaryPage } from './pages/Summary'
 
 export function App() {
   const [token] = useState(() => bootstrapToken())
@@ -21,7 +22,7 @@ export function App() {
     if (m.kind === 'session' || m.kind === 'report') status.reload()
   })
 
-  // g i / g l chords and ? for help.
+  // g i / g s / g l chords and ? for help.
   const [chord, setChord] = useState(false)
   useKeys((e) => {
     if (isTyping(e)) return
@@ -37,6 +38,7 @@ export function App() {
     if (chord) {
       setChord(false)
       if (e.key === 'i') navigate('/')
+      if (e.key === 's') navigate('/summary')
       if (e.key === 'l') navigate('/ledger')
       return
     }
@@ -56,6 +58,7 @@ export function App() {
   if (sm) page = <SessionPage key={sm[1]} id={decodeURIComponent(sm[1])} />
   else if (cm) page = <ClaimRedirect id={decodeURIComponent(cm[1])} />
   else if (path.startsWith('/ledger')) page = <Ledger />
+  else if (path.startsWith('/summary')) page = <SummaryPage />
   else page = <Inbox />
 
   return (
@@ -73,6 +76,7 @@ export function App() {
         <nav className="nav">
           <Link to="/" className={cx('nav-link', (path === '/' || path.startsWith('/sessions')) && 'active')}>Sessions</Link>
           <Link to="/ledger" className={cx('nav-link', path.startsWith('/ledger') && 'active')}>Ledger</Link>
+          <Link to="/summary" className={cx('nav-link', path.startsWith('/summary') && 'active')}>Summary</Link>
         </nav>
         <div className="topbar-right">
           <StatusPill status={status.data} />

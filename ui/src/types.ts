@@ -339,3 +339,49 @@ export const DISPUTE_REASONS: { key: string; label: string }[] = [
 export const CLAIM_TYPES = [
   'fix', 'feature', 'diagnosis', 'test', 'refactor', 'docs', 'review', 'research', 'ops', 'decision', 'negative_result',
 ]
+
+export interface SummaryTile {
+  key: string
+  label: string
+  value: number
+  detail?: string
+  items?: string[]
+}
+
+export interface SummaryRef {
+  id: string
+  title: string
+}
+
+export interface SummaryDetail {
+  text: string
+  said?: string
+  session?: string
+}
+
+export interface SummaryNote {
+  text: string
+  sessions?: SummaryRef[]
+  details?: SummaryDetail[]
+}
+
+export interface SummaryRequest {
+  session_id: string
+  title: string
+  when: string
+  active_sec: number
+  facts: string[]
+  look: boolean
+}
+
+export interface Summary {
+  since: string
+  sessions: number
+  active_sec: number
+  cost_usd: number
+  tiles: SummaryTile[]
+  apps: { name: string; actions: number }[]
+  well: SummaryNote[]
+  look: SummaryNote[]
+  requests: SummaryRequest[]
+}

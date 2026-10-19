@@ -1,6 +1,6 @@
 import type {
-  Attribution, ClaimCard, Commit, Event, LedgerEntry, Report, SessionItem, Share, Stat, AgentConfig, Status, TestRun,
-  VerifyReport,
+  Attribution, ClaimCard, Commit, Event, LedgerEntry, Report, SessionItem, Share, Stat, AgentConfig, Status, Summary,
+  TestRun, VerifyReport,
 } from './types'
 
 const KEY = 'credence.token'
@@ -77,6 +77,7 @@ export const api = {
   status: () => req<Status>('GET', '/api/status'),
   sessions: (q: URLSearchParams) => req<{ sessions: SessionItem[] }>('GET', `/api/sessions?${q}`),
   session: (id: string) => req<Report>('GET', `/api/sessions/${enc(id)}`),
+  summary: (range: string) => req<Summary>('GET', `/api/summary?range=${enc(range)}`),
   events: (id: string, from: number, to: number) =>
     req<{ events: Event[] }>('GET', `/api/sessions/${enc(id)}/events?from=${from}&to=${to}`),
   rereport: (id: string) => req<unknown>('POST', `/api/sessions/${enc(id)}/report`, {}),

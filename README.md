@@ -86,7 +86,7 @@ credence doctor           # check capture, daemon, keys, ledger and model setup
 ```
 
 Installer settings: `CREDENCE_NO_SETUP=1` installs only, `CREDENCE_SETUP=1`
-answers yes to both questions, and `CREDENCE_VERSION=v0.9.3` pins a release
+answers yes to both questions, and `CREDENCE_VERSION=v0.9.4` pins a release
 (see the top of [`scripts/install.sh`](scripts/install.sh)).
 
 To build from source instead, use Go 1.27+, then run `credence` to set up:
